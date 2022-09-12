@@ -9,13 +9,12 @@ class Item:
 
 class Weapon(Item):
     def __init__(self, dmg_type, element, min_damage, max_damage, bonuses, resists,
-                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL, on_hit_multiplier=constants.DEFAULT_ON_HIT_MULTIPLIER):
+                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL):
         super().__init__(bonuses, resists)
         self.damage = (min_damage, max_damage)
         self.dmg_type = dmg_type
         self.element = element
         self.on_hit_special = on_hit_special
-        self.on_hit_multiplier = on_hit_multiplier
 
 
 class Food:

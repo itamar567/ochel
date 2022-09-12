@@ -1,5 +1,6 @@
 import math
 import random
+import tkinter
 
 import constants
 import utilities
@@ -70,22 +71,30 @@ class Pet:
         self.bonuses = {"crit_multiplier": 1.75}
         self.damage = (player.stats.CHA//10, player.stats.CHA//10)
         self.skills = {}
+        self.skill_images = {}
+        self.skill_names = {}
         self.cooldowns = {}
-        self.skills_by_name = {}
         self.active_cooldowns = {}
         self.waking_up = False
+        self.armor = "???"
 
         # Rollback data
         self.rollback_cooldown = [self.active_cooldowns.copy()]
         self.rollback_waking_up = [self.waking_up]
 
-    def update_skills_by_name(self):
+    def update_skill_images(self):
         """
-        Updates the skills_by_name dict based on the skills dict.
+        Updates the skill_images dict.
         """
-
         for skill in self.skills.keys():
-            self.skills_by_name[self.skills[skill][0]] = (skill, self.skills[skill][1])
+            file_name = "images/"
+            if skill == " ":
+                file_name += "attack"
+            elif skill == "M":
+                file_name += "skip"
+            else:
+                file_name += f"{self.armor.replace(' ', '_').lower()}/{skill}"
+            self.skill_images[skill] = tkinter.PhotoImage(file=f"{file_name}.png")
 
     def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False,
                dmg_type=constants.DMG_TYPE_MAGIC):
@@ -100,7 +109,7 @@ class Pet:
         """
 
         glancing = False
-        bonus = self.bonuses["bonus"]
+        bonus = self.bonuses.get("bonus", 0)
         enemy_mpm = entity.bonuses.get(utilities.dmg_type_2_str(dmg_type) + "_def", 0)
         enemy_mpm += entity.bonuses.get("mpm", 0)
 
@@ -188,12 +197,11 @@ class Pet:
             return
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_waking_up.append(self.waking_up)
-        if event.widget["text"] != "Attack":
-            self.match.update_rotation_log(event.widget["text"], add_to_last_attack=True)
-        if event.widget["text"] != "Skip":
-            skill = self.skills_by_name[event.widget["text"]][0]
-            self.active_cooldowns[skill] = self.cooldowns[skill] + 1
-            self.skills[skill][1]()
+        if event.widget.skill != " ":
+            self.match.update_rotation_log(self.skill_names[event.widget.skill], add_to_last_attack=True)
+        if event.widget.skill != "M":
+            self.active_cooldowns[event.widget.skill] = self.cooldowns[event.widget.skill] + 1
+            self.skills[event.widget.skill]()
         self.match.next()
 
     def rollback(self):
@@ -637,7 +645,8 @@ class Player(Entity):
         self.active_cooldowns = {}
         self.cooldowns = {}
         self.skills = {}
-        self.skills_by_name = {}
+        self.skill_images = {}
+        self.skill_names = {}
 
         # Some armors use an extra button (e.g. ChW for soulthreads)
         self.extra_window = None
@@ -648,14 +657,6 @@ class Player(Entity):
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
-
-    def update_skills_by_name(self):
-        """
-        Updates the skills_by_name dict based on the skills dict.
-        """
-
-        for skill in self.skills.keys():
-            self.skills_by_name[self.skills[skill][0]] = (skill, self.skills[skill][1])
 
     def recalculate_bonuses(self, old_stats):
         """
@@ -825,25 +826,24 @@ class Player(Entity):
         Uses a skill based on a button onclick event
 
         :param event: The button onclick event.
-        :param attack_name: The attack's name (will use the button's text if not specified)
+        :param attack_name: The attack's name (will use the button's skill if not specified)
         :return:
         """
 
         if event.widget["state"] == "disabled":
             return
-        skill = self.skills_by_name[event.widget["text"]][0]
         if attack_name is None:
-            attack_name = event.widget["text"]
-        self.spend_mp_on_skill(skill)
-        if skill not in ("N", "M"):
-            self.active_cooldowns[skill] = self.cooldowns[skill] + 1
-        if self.skills[skill][1]() != constants.SKILL_RETURN_CODE_DOUBLE_TURN:
+            attack_name = self.skill_names[event.widget.skill]
+        self.spend_mp_on_skill(event.widget.skill)
+        if event.widget.skill not in ("N", "M"):
+            self.active_cooldowns[event.widget.skill] = self.cooldowns[event.widget.skill] + 1
+        if self.skills[event.widget.skill]() != constants.SKILL_RETURN_CODE_DOUBLE_TURN:
             self.match.update_rotation_log(attack_name)
             self.match.pet_turn()
         else:
             self.match.update_rotation_log(attack_name, double_turn=True)
             self.match.update_match_after_double_turn()
-        return skill
+        return event.widget.skill
 
     def check_mp_for_skill(self, skill):
         """
@@ -872,6 +872,22 @@ class Player(Entity):
             self.mp_potion_count -= 1
         else:
             self.mp = max(self.mp - self.mana_cost[skill], 0)
+
+    def update_skill_images(self):
+        """
+        Updates the skill_images dict.
+        """
+        for skill in self.skills.keys():
+            file_name = "images/"
+            if skill == " ":
+                file_name += "attack"
+            elif skill == "N":
+                file_name += "hp"
+            elif skill == "M":
+                file_name += "mp"
+            else:
+                file_name += f"{self.armor.lower()}/{skill}"
+            self.skill_images[skill] = tkinter.PhotoImage(file=f"{file_name}.png")
 
     def rollback(self):
         """

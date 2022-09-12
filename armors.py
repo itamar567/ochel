@@ -18,26 +18,25 @@ class Chaosweaver(classes.Player):
         self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
         self.empowered = True
         self.soulthreads = 2
-        self.skills = {"V": ("Untangle", self.skill_untangle), "C": ("Snap", self.skill_obliterate),
-                       "0": ("Rebuke", self.skill_rebuke), "9": ("Venge", self.skill_vengeance),
-                       "8": ("Rip", self.skill_soul_rip), "7": ("Dom", self.skill_dominance),
-                       "6": ("Siphon", self.skill_soul_siphon),
-                       " ": ("Attack", self.skill_attack),
-                       "5": ("Aegis", self.skill_soul_aegis),
-                       "4": ("Gambit", self.skill_soul_gambit), "3": ("Slice", self.skill_soul_slice),
-                       "2": ("Hexing", self.skill_hexing_wheel), "1": ("Aggro", self.skill_aggression),
-                       "X": ("Shred", self.skill_soul_shred), "Z": ("Assault", self.skill_soul_assault),
-                       "N": ("HP", self.hp_potion), "M": ("MP", self.mp_potion)}
+        self.skill_names = {"V": "Untangle", "C": "Snap", "0": "Rebuke", "9": "Venge", "8": "Rip",
+                            "7": "Dominance", "6": "Siphon", " ": "Attack", "5": "Aegis", "4": "Gambit", "3": "Slice",
+                            "2": "Hexing", "1": "Aggro", "X": "Shred", "Z": "Assault", "M": "MP", "N": "HP"}
+        self.skills = {"V": self.skill_untangle, "C": self.skill_obliterate, "0": self.skill_rebuke,
+                       "9": self.skill_vengeance, "8": self.skill_soul_rip, "7": self.skill_dominance,
+                       "6": self.skill_soul_siphon, " ": self.skill_attack, "5": self.skill_soul_aegis,
+                       "4": self.skill_soul_gambit, "3": self.skill_soul_slice, "2": self.skill_hexing_wheel,
+                       "1": self.skill_aggression, "X": self.skill_soul_shred, "Z": self.skill_soul_assault,
+                       "N": self.hp_potion, "M": self.mp_potion}
         self.empowered_skills = {"9", "6", "5", "4", "1", "X"}
         self.mana_cost = {"V": 35, "C": 35, "0": 20, "9": 45, "8": 25, "7": 30, "6": 35, " ": 0,
                           "5": 15, "4": 30, "3": 5, "2": 20, "1": 45, "X": 27, "Z": 20}
         self.cooldowns = {"V": 16, "C": 7, "0": 9, "9": 9, "8": 19, "7": 3, "6": 9, " ": 0,
                           "5": 8, "4": 4, "3": 4, "2": 4, "1": 4, "X": 14, "Z": 10}
+        self.update_skill_images()
         self.bonuses["mpm"] = 5
         self.bonuses["crit"] += 5
         self.bonuses["bpd"] = 5
         self.bonuses["crit_multiplier"] = 1.85
-        self.update_skills_by_name()
 
         self.extra_window = tkinter.Tk()
         self.extra_window.title("Soulthreads")
@@ -51,9 +50,8 @@ class Chaosweaver(classes.Player):
     def use_skill_button_onclick(self, event, attack_name=None):
         if event.widget["state"] == "disabled":
             return
-        skill = self.skills_by_name[event.widget["text"]][0]
-        attack_name = event.widget["text"]
-        if self.empowered and skill in self.empowered_skills:
+        attack_name = self.skill_names[event.widget.skill]
+        if self.empowered and event.widget.skill in self.empowered_skills:
             attack_name = "e" + attack_name
         super().use_skill_button_onclick(event, attack_name=attack_name)
 
@@ -233,6 +231,7 @@ class Technomancer(classes.Player):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL):
         super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level)
+
         self.armor = "Technomancer"
         self.heat_level = -1
         self.drive_boost = lambda: (1 - (self.mp / self.max_mp)) * 2
@@ -241,27 +240,26 @@ class Technomancer(classes.Player):
         self.start_wis = self.stats.WIS
         self.default_weapon = weapons.Laser_Screwdriver
         self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
-        self.skills = {"V": ("Force", self.skill_force_sword), "C": ("Bow", self.skill_photon_bow),
-                       "0": ("Static", self.skill_static_overload_blast),
-                       "9": ("Grenade", self.skill_mana_burst_grenades),
-                       "8": ("Aging", self.skill_enhanced_metallic_aging), "7": ("Drill", self.skill_drillbit),
-                       "6": ("Horizon", self.skill_event_horizon),
-                       " ": ("Attack", self.skill_attack),
-                       "5": ("Barrier", self.skill_reactive_barrier),
-                       "4": ("Over", self.skill_overclock), "3": ("Mana", self.skill_mana_eruption),
-                       "2": ("Repair", self.skill_magnetic_resonance_protocol),
-                       "1": ("Sonic", self.skill_sonic_boom_blaster),
-                       "X": ("Tog", self.skill_tog_drone_tracking), "Z": ("Vent", self.skill_vent_heat),
-                       "N": ("HP", self.hp_potion), "M": ("MP", self.mp_potion)}
+        self.skills = {"V": self.skill_force_sword, "C": self.skill_photon_bow, "0": self.skill_static_overload_blast,
+                       "9": self.skill_mana_burst_grenades, "8": self.skill_enhanced_metallic_aging,
+                       "7": self.skill_drillbit, "6": self.skill_event_horizon, " ": self.skill_attack,
+                       "5": self.skill_reactive_barrier, "4": self.skill_overclock, "3": self.skill_mana_eruption,
+                       "2": self.skill_magnetic_resonance_protocol, "1": self.skill_sonic_boom_blaster,
+                       "X": self.skill_tog_drone_tracking, "Z": self.skill_vent_heat, "M": self.mp_potion,
+                       "N": self.hp_potion}
+        self.skill_names = {"V": "Force", "C": "Bow", "0": "Static", "9": "Grenade", "8": "Aging", "7": "Drill",
+                            "6": "Horizon", " ": "Attack", "5": "Barrier", "4": "Over", "3": "Mana", "2": "Repair",
+                            "1": "Sonic", "X": "Tog", "Z": "Vent", "M": "MP", "N": "HP"}
         self.mana_cost = {"V": 35, "C": 35, "0": 40, "9": 35, "8": 30, "7": 35, "6": 45, " ": 0,
                           "5": 25, "4": 30, "3": 0, "2": 40, "1": 35, "X": 35, "Z": 0}
         self.cooldowns = {"V": 8, "C": 1, "0": 2, "9": 4, "8": 7, "7": 9, "6": 6, " ": 0,
                           "5": 5, "4": 13, "3": 18, "2": 9, "1": 14, "X": 11, "Z": 0}
         self.bonuses["mpm"] = 5
         self.bonuses["crit"] += 5
-        self.update_skills_by_name()
 
         self.rollback_heat_level = [self.heat_level]
+
+        self.update_skill_images()
 
     def rollback(self):
         super().rollback()

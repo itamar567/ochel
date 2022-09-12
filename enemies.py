@@ -30,6 +30,8 @@ class Oratath(classes.Enemy):
         self.bonuses["bonus"] = 23
         self.bonuses["crit"] = 5
 
+        self.resists["immobility"] = 75
+
         self.element = "good"
         self.damage = (76, 76)
         self.dmg_type = constants.DMG_TYPE_MELEE
@@ -126,6 +128,8 @@ class Suki(classes.Enemy):
         self.bonuses["bpd"] = 25
         self.bonuses["crit"] = 34
         self.bonuses["bonus"] = 38
+
+        self.resists["immobility"] = 300
 
         self.max_hp = 13532
         self.hp = self.max_hp

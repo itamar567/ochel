@@ -6,7 +6,6 @@ import effects
 import classes
 import constants
 import match_constants
-import misc
 import pets
 import player_values
 
@@ -14,9 +13,9 @@ import player_values
 class Match:
     def __init__(self):
         # Buttons
-        self.buttons: dict[str, tuple[tkinter.Button, any]] = {}
-        self.pet_buttons: dict[str, tuple[tkinter.Button, any]] = {}
-        self.food_buttons: dict[str, tkinter.Button, any] = {}
+        self.buttons = {}
+        self.pet_buttons = {}
+        self.food_buttons = {}
 
         # Setup enemies and player
         self.window = tkinter.Tk()
@@ -29,6 +28,11 @@ class Match:
             entity.match = self
         self.current_turn = 1
 
+        # We need to keep a reference to the HP&MP button images, so they won't get garbage-collected by python
+        self.hp_button_img = tkinter.PhotoImage(file="images/hp.png")
+        self.mp_button_img = tkinter.PhotoImage(file="images/mp.png")
+        self.skip_button_image = tkinter.PhotoImage(file="images/skip.png")
+
         # Setup main window and pet
         self.pet = pets.PetKidDragon(player_values.pet_name, self.player, classes.PetStats(player_values.pet_stats))
         self.setup_window_pet()
@@ -36,7 +40,7 @@ class Match:
         self.setup_window_player()
 
         # Setup food window
-        self.food_by_name: dict[str, misc.Food] = {}
+        self.food_by_name = {}
         self.food_window = tkinter.Tk()
         self.food_window.title("Food")
         self.setup_window_food()
@@ -275,15 +279,15 @@ class Match:
         """
         to_pop = []
         for skill in self.player.active_cooldowns.keys():
-            self.buttons[skill][0]["text"] = self.buttons[skill][0]["text"].split(",")[0]
             if self.player.active_cooldowns[skill] == 1 and reduce_cooldowns:
                 to_pop.append(skill)
                 self.buttons[skill][0]["state"] = "normal"
+                self.buttons[skill][0]["text"] = ""
                 continue
             if reduce_cooldowns:
                 self.player.active_cooldowns[skill] -= 1
+            self.buttons[skill][0]["text"] = self.player.active_cooldowns[skill]
             self.buttons[skill][0]["state"] = "disabled"
-            self.buttons[skill][0]["text"] += f", {self.player.active_cooldowns[skill]}"
         for skill in to_pop:
             self.player.active_cooldowns.pop(skill)
 
@@ -296,15 +300,15 @@ class Match:
 
         to_pop = []
         for skill in self.pet.active_cooldowns.keys():
-            self.pet_buttons[skill][0]["text"] = self.pet_buttons[skill][0]["text"].split(",")[0]
             if self.pet.active_cooldowns[skill] == 1 and reduce_cooldowns:
                 to_pop.append(skill)
                 self.pet_buttons[skill][0]["state"] = "normal"
+                self.pet_buttons[skill][0]["text"] = ""
                 continue
             if reduce_cooldowns:
                 self.pet.active_cooldowns[skill] -= 1
             self.pet_buttons[skill][0]["state"] = "disabled"
-            self.pet_buttons[skill][0]["text"] += f", {self.pet.active_cooldowns[skill]}"
+            self.pet_buttons[skill][0]["text"] = self.pet.active_cooldowns[skill]
         for skill in to_pop:
             self.pet.active_cooldowns.pop(skill)
 
@@ -376,19 +380,20 @@ class Match:
 
         for i in range(len(constants.KEYBOARD_CONTROLS)):
             if constants.KEYBOARD_CONTROLS[i] == "N":
-                button_txt = "HP"
+                button_img = self.hp_button_img
             elif constants.KEYBOARD_CONTROLS[i] == "M":
-                button_txt = "MP"
+                button_img = self.mp_button_img
             elif constants.KEYBOARD_CONTROLS[i] == "B":
                 if constants.SLOT_TRINKET not in self.player.gear.keys() \
                         or self.player.gear[constants.SLOT_TRINKET].abillity is None:
                     continue
-                button_txt = self.player.gear[constants.SLOT_TRINKET].abillity[0]
+                button_img = self.player.gear[constants.SLOT_TRINKET].abillity[0]
             else:
-                button_txt = self.player.skills[constants.KEYBOARD_CONTROLS[i]][0]
-            button = tkinter.Button(master=self.window, text=button_txt)
+                button_img = self.player.skill_images[constants.KEYBOARD_CONTROLS[i]]
+            button = tkinter.Label(master=self.window, image=button_img, compound=tkinter.TOP)
+            button.skill = constants.KEYBOARD_CONTROLS[i]
             button.bind("<Button-1>", self.player.use_skill_button_onclick)
-            button.grid(row=0, column=i, padx=5, pady=5)
+            button.grid(row=0, column=i)
             self.buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
 
         button = tkinter.Button(master=self.window, text="Back")
@@ -425,14 +430,15 @@ class Match:
 
         for i in range(len(constants.KEYBOARD_CONTROLS)):
             if constants.KEYBOARD_CONTROLS[i] == "M":
-                button_txt = "Skip"
+                button_img = self.skip_button_image
             elif constants.KEYBOARD_CONTROLS[i] not in self.pet.skills:
                 continue
             else:
-                button_txt = self.pet.skills[constants.KEYBOARD_CONTROLS[i]][0]
-            button = tkinter.Button(master=self.window, text=button_txt)
+                button_img = self.pet.skill_images[constants.KEYBOARD_CONTROLS[i]]
+            button = tkinter.Label(master=self.window, image=button_img, compound=tkinter.TOP)
+            button.skill = constants.KEYBOARD_CONTROLS[i]
             button.bind("<Button-1>", self.pet.use_skill)
-            button.grid(row=0, column=i, padx=5, pady=5)
+            button.grid(row=0, column=i)
             self.pet_buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
 
     def show_window_pet(self):
@@ -475,7 +481,7 @@ class Match:
                 self.buttons[skill][0]["state"] = "disabled"
             elif skill not in self.player.active_cooldowns.keys():
                 self.buttons[skill][0]["state"] = "normal"
-                self.buttons[skill][0]["text"] = self.buttons[skill][0]["text"].split(",")[0]
+                self.buttons[skill][0]["text"] = ""
 
         if self.player.hp_potion_count <= 0:
             self.buttons["N"][0]["state"] = "disabled"
@@ -507,7 +513,8 @@ class Match:
             self.softclear_window()
             self.show_window_pet()
         else:
-            self.pet.use_skill("Attack")
+            self.pet.skills[" "][1]()  # use attack skill
+            self.next()
 
     def next(self):
         """
