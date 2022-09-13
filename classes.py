@@ -470,12 +470,11 @@ Effects:"""
                         self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked")
         return damage
 
-    def remove_effect(self, effect, remove_from_fade=False):
+    def remove_effect(self, effect):
         """
         Removes an effect.
 
         :param effect: The effect to remove
-        :param remove_from_fade: Whether to remove the effect from effects_fade_turn or not.
         """
 
         removed = False
@@ -499,16 +498,15 @@ Effects:"""
                     death_proof = True
                     break
             self.death_proof = death_proof
-        if remove_from_fade:
-            latest_effect_fade_turn = -1
-            latest_effect_instance = None
-            for turn in self.effects_fade_turn.keys():
-                for eff in self.effects_fade_turn[turn]:
-                    if eff.name == effect.name:
-                        if turn > latest_effect_fade_turn:
-                            latest_effect_fade_turn = turn
-                            latest_effect_instance = eff
-            self.effects_fade_turn[latest_effect_fade_turn].remove(latest_effect_instance)
+        latest_effect_fade_turn = -1
+        latest_effect_instance = None
+        for turn in self.effects_fade_turn.keys():
+            for eff in self.effects_fade_turn[turn]:
+                if eff.name == effect.name:
+                    if turn > latest_effect_fade_turn:
+                        latest_effect_fade_turn = turn
+                        latest_effect_instance = eff
+        self.effects_fade_turn[latest_effect_fade_turn].remove(latest_effect_instance)
         if effect.stun is True:
             for eff in self.effects:
                 if eff.stun is True:
@@ -532,7 +530,7 @@ Effects:"""
         for eff in self.effects:
             if effect.name == eff.name:
                 already_applied = True
-                self.remove_effect(effect, remove_from_fade=True)
+                self.remove_effect(effect)
                 break
 
         fade_turn = self.match.current_turn + effect.duration

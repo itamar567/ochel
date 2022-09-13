@@ -68,7 +68,6 @@ def determine_damage_type_by_stats(entity):
 
 def stun_chance(entity):
     immobility_resist = entity.resists.get("immobility", 0) + entity.resists.get("all", 0)
-    print(immobility_resist)
     chance_to_stun = (100 - immobility_resist) / 100
     chance_to_stun = max(chance_to_stun, 0)
     return chance(chance_to_stun)

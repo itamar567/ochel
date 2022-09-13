@@ -176,7 +176,7 @@ class Chaosweaver(classes.Player):
 
     def skill_soul_rip(self):
         for entity in self.match.enemies:
-            if self.attack(entity) == constants.ATTACK_CODE_SUCCESS and utilities.stun_chance(entity):
+            if self.attack(entity) == constants.ATTACK_CODE_SUCCESS:
                 entity.add_effect(effects.rippen_soul)
 
     def skill_vengeance(self):

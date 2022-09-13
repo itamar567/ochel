@@ -48,6 +48,7 @@ class Oratath(classes.Enemy):
         self.skill_1_multiplier = 0.75  # Oratath's attack 1's damage halves each time
 
         self.rollback_bonuses = [self.bonuses.copy()]
+        self.rollback_resists = [self.resists.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
 
@@ -69,7 +70,8 @@ class Oratath(classes.Enemy):
             self.active_cooldowns.pop(skill)
 
     def next(self):
-        super().next()
+        if super().next() == constants.ENEMY_STUNNED_STR:
+            return constants.ENEMY_STUNNED_STR
 
         attacked = False
         for attack in ("1", "2", "3", "4"):
@@ -144,6 +146,7 @@ class Suki(classes.Enemy):
         self.turn = 0  # Using a different turn variable will allow to only update it when Suki is not stunned
 
         self.rollback_bonuses = [self.bonuses.copy()]
+        self.rollback_resists = [self.resists.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
         self.rollback_last_attack = [self.last_attack]
