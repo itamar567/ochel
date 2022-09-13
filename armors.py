@@ -176,8 +176,8 @@ class Chaosweaver(classes.Player):
 
     def skill_soul_rip(self):
         for entity in self.match.enemies:
-            self.attack(entity)
-            entity.add_effect(effects.rippen_soul)
+            if self.attack(entity) == constants.ATTACK_CODE_SUCCESS and utilities.stun_chance(entity):
+                entity.add_effect(effects.rippen_soul)
 
     def skill_vengeance(self):
         for i in range(19):
@@ -203,8 +203,10 @@ class Chaosweaver(classes.Player):
             self.attack(self.match.targeted_enemy, damage_multiplier=damage_multiplier)
 
     def skill_obliterate(self):
+        if self.attack(self.match.targeted_enemy, damage_multiplier=2) == constants.ATTACK_CODE_UNSUCCESSFUL:
+            return
         if (self.match.targeted_enemy.max_hp <= 0.5 * self.max_hp
-            and self.match.targeted_enemy.hp <= 0.7 * self.match.targeted_enemy.max_hp) \
+                and self.match.targeted_enemy.hp <= 0.7 * self.match.targeted_enemy.max_hp) \
                 or (0.5 * self.max_hp <= self.match.targeted_enemy.max_hp <= self.max_hp
                     and self.match.targeted_enemy.hp <= 0.5 * self.match.targeted_enemy.max_hp) \
                 or (self.max_hp <= self.match.targeted_enemy.max_hp <= 2 * self.max_hp
