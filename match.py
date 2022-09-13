@@ -314,8 +314,6 @@ class Match:
         for skill in self.player.active_cooldowns.keys():
             if self.player.active_cooldowns[skill] == 1 and reduce_cooldowns:
                 to_pop.append(skill)
-                self.buttons[skill][0]["state"] = "normal"
-                self.buttons[skill][0]["text"] = ""
                 continue
             if reduce_cooldowns:
                 self.player.active_cooldowns[skill] -= 1
@@ -335,8 +333,6 @@ class Match:
         for skill in self.pet.active_cooldowns.keys():
             if self.pet.active_cooldowns[skill] == 1 and reduce_cooldowns:
                 to_pop.append(skill)
-                self.pet_buttons[skill][0]["state"] = "normal"
-                self.pet_buttons[skill][0]["text"] = ""
                 continue
             if reduce_cooldowns:
                 self.pet.active_cooldowns[skill] -= 1
@@ -526,6 +522,16 @@ class Match:
         else:
             self.buttons["M"][0]["state"] = "normal"
 
+    def update_pet_skill_buttons(self):
+        """
+        Updates the pet skill buttons' state based on cooldown.
+        """
+
+        for skill in self.pet.skills.keys():
+            if skill not in self.pet.active_cooldowns.keys():
+                self.pet_buttons[skill][0]["state"] = "normal"
+                self.pet_buttons[skill][0]["text"] = ""
+
     def pet_turn(self):
         """
         Prompts the user to choose a pet skill.
@@ -600,10 +606,12 @@ class Match:
         self.current_turn -= 1
         for entity in self.entities:
             entity.rollback()
+        self.pet.rollback()
 
         self.update_player_cooldowns(reduce_cooldowns=False)
         self.update_pet_cooldowns(reduce_cooldowns=False)
         self.update_player_skill_buttons()
+        self.update_pet_skill_buttons()
         for skill in self.pet.skills.keys():
             if skill not in self.pet.active_cooldowns:
                 self.pet_buttons[skill][0]["state"] = "normal"
