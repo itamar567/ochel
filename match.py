@@ -111,6 +111,7 @@ class Match:
             self.entities_windows.append(tkinter.Tk())
         self.entities_details = []
         self.setup_detail_windows()
+        self.update_player_skill_buttons()
 
         while True:
             self.window.update()
@@ -512,13 +513,17 @@ class Match:
 
         if self.player.hp_potion_count <= 0:
             self.buttons["N"][0]["state"] = "disabled"
+            self.buttons["N"][0]["text"] = ""
         else:
             self.buttons["N"][0]["state"] = "normal"
+            self.buttons["N"][0]["text"] = self.player.hp_potion_count
 
         if self.player.mp_potion_count <= 0:
             self.buttons["M"][0]["state"] = "disabled"
+            self.buttons["M"][0]["text"] = ""
         else:
             self.buttons["M"][0]["state"] = "normal"
+            self.buttons["M"][0]["text"] = self.player.mp_potion_count
 
     def update_pet_skill_buttons(self):
         """
