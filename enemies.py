@@ -55,7 +55,7 @@ class Oratath(classes.Enemy):
         super().attacked(damage, element, entity, dot, glancing, crit)
         if not dot and effects.holy_shield in self.effects and entity == self.match.player:
             damage = round(self.damage[0] * self.skill_1_multiplier)
-            self.match.update_main_log(f"{entity.name} takes {damage} damage.")
+            self.match.update_main_log(f"{entity.name} takes {damage} damage.", f"p_attacked")
             entity.hp -= damage
             self.skill_1_multiplier /= 2
 
@@ -76,18 +76,18 @@ class Oratath(classes.Enemy):
             if self.active_cooldowns.get(attack, 0) == 0:
                 if attack == "2" and utilities.chance(0.5):  # Attack 2 has a 50% chance to be used
                     continue
-                self.match.update_main_log(f"Oratath uses attack {attack}.")
+                self.match.update_main_log(f"Oratath uses attack {attack}.", "e_comment")
                 self.skills[attack]()
                 self.reduce_cooldowns()
                 self.active_cooldowns[attack] = self.cooldowns[attack]
                 attacked = True
                 break
         if not attacked:
-            self.match.update_main_log(f"Oratath uses attack 5")
+            self.match.update_main_log(f"Oratath uses attack 5", "e_comment")
             self.skills["5"]()
 
     def skill_1(self):
-        self.match.update_main_log("Mystical energies surround Oratath!")
+        self.match.update_main_log("Mystical energies surround Oratath!", "e_comment")
         self.add_effect(effects.holy_shield)
         self.skill_1_multiplier = 0.75
         for i in range(4):
@@ -98,7 +98,7 @@ class Oratath(classes.Enemy):
             self.attack(self.match.player)
 
     def skill_3(self):
-        self.match.update_main_log("Blinded by Oratath's light!")
+        self.match.update_main_log("Blinded by Oratath's light!", "e_comment")
         hit = False
         for i in range(4):
             if self.attack(self.match.player) == constants.ATTACK_CODE_SUCCESS:
@@ -107,7 +107,7 @@ class Oratath(classes.Enemy):
             self.match.player.add_effect(effects.blind)
 
     def skill_4(self):
-        self.match.update_main_log("Oratath regenerates!")
+        self.match.update_main_log("Oratath regenerates!", "e_comment")
         self.attacked(self.max_hp / 2, "health")
         self.attack(self.match.player)
 
@@ -171,7 +171,7 @@ class Suki(classes.Enemy):
 
     def player_double_turn_reaction(self):
         super().player_double_turn_reaction()
-        self.match.update_main_log("Suki's armor sparks in anticipation of your next attack!")
+        self.match.update_main_log("Suki's armor sparks in anticipation of your next attack!", "e_comment")
         self.add_effect(effects.amplified_reactions)
 
     def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False):
@@ -179,7 +179,7 @@ class Suki(classes.Enemy):
         if not dot and effects.amplified_reactions in self.effects and entity == self.match.player:
             damage *= 0.5
             damage = math.ceil(damage)
-            self.match.update_main_log(f"{entity.name} takes {damage} damage.")
+            self.match.update_main_log(f"{entity.name} takes {damage} damage.", f"p_attacked")
             entity.hp -= damage
 
     def next(self):
@@ -187,11 +187,11 @@ class Suki(classes.Enemy):
             return constants.ENEMY_STUNNED_STR
         self.turn += 1
         if self.turn == 1 or (self.turn - 50) % 37 == 0:
-            self.match.update_main_log("Suki uses attack 1.")
+            self.match.update_main_log("Suki uses attack 1.", "e_comment")
             self.skill_1()
             return
         self.last_attack = 2 if self.last_attack == 10 else self.last_attack + 1
-        self.match.update_main_log(f"Suki uses attack {self.last_attack}.")
+        self.match.update_main_log(f"Suki uses attack {self.last_attack}.", "e_comment")
         self.skills[str(self.last_attack)]()
 
     def skill_1(self):
@@ -202,7 +202,7 @@ class Suki(classes.Enemy):
             self.attack(self.match.player, can_miss=False)
         self.damage = old_damage
         self.match.player.hp = max(self.match.player.hp - self.match.player.max_hp // 2, 1)
-        self.match.update_main_log("So you still stand? Impressive...")
+        self.match.update_main_log("So you still stand? Impressive...", "e_comment")
 
     def skill_2(self):
         self.add_effect(effects.ritual_charge_30)

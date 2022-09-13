@@ -49,6 +49,36 @@ class Match:
         self.log_window = tkinter.Tk()
         self.log_window.title("Log")
         self.main_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
+
+        # Log color config
+        # if the tag stats with 'p_', the tag is related to the player
+        # if the tag stats with 'e_', the tag is related to the enemies
+        self.main_log_widget.tag_config("p_heal", foreground="magenta")
+        self.main_log_widget.tag_config("e_heal", foreground="magenta")
+        self.main_log_widget.tag_config("p_hot", foreground="magenta")
+        self.main_log_widget.tag_config("e_hot", foreground="magenta")
+        self.main_log_widget.tag_config("p_mana_heal", foreground="blue")
+        self.main_log_widget.tag_config("e_mana_heal", foreground="blue")
+        self.main_log_widget.tag_config("p_mana_heal_dot", foreground="blue")
+        self.main_log_widget.tag_config("e_mana_heal_dot", foreground="blue")
+        self.main_log_widget.tag_config("p_mana_attacked", foreground="blue")
+        self.main_log_widget.tag_config("e_mana_attacked", foreground="blue")
+        self.main_log_widget.tag_config("p_mana_dot", foreground="blue")
+        self.main_log_widget.tag_config("e_mana_dot", foreground="blue")
+        self.main_log_widget.tag_config("p_dot", foreground="yellow")
+        self.main_log_widget.tag_config("e_dot", foreground="yellow")
+        self.main_log_widget.tag_config("p_comment", foreground="green")
+        self.main_log_widget.tag_config("e_comment", foreground="green")
+        self.main_log_widget.tag_config("p_attacked", foreground="red")
+        self.main_log_widget.tag_config("p_attacked_crit", foreground="red")
+        self.main_log_widget.tag_config("p_attacked_glance", foreground="red")
+        self.main_log_widget.tag_config("p_attacked_crit_glance", foreground="red")
+        self.main_log_widget.tag_config("e_attacked", foreground="cyan")
+        self.main_log_widget.tag_config("e_attacked_crit", foreground="cyan")
+        self.main_log_widget.tag_config("e_attacked_glance", foreground="cyan")
+        self.main_log_widget.tag_config("e_attacked_crit_glance", foreground="cyan")
+        self.main_log_widget.tag_config("default", foreground="black")
+
         self.main_log_widget.configure(state="disabled")
         self.main_log_widget.pack()
         self.rotation_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
@@ -137,7 +167,7 @@ class Match:
 
         for slot in player_values.gear_builds[build_index]:
             self.player.equip(slot, player_values.gear_builds[build_index][slot])
-        self.update_main_log(f"{self.player.name} switched to build {build_index + 1}")
+        self.update_main_log(f"{self.player.name} switched to build {build_index + 1}", "p_comment")
         self.update_rotation_log(f"Switch to build {build_index + 1}", double_turn=True)
 
     def update_rotation_log(self, attack_name, double_turn=False, add_to_last_attack=False):
@@ -162,15 +192,16 @@ class Match:
         self.rotation_log_widget.see("end")
         self.rotation_log_widget.configure(state="disabled")
 
-    def update_main_log(self, log):
+    def update_main_log(self, log, tag="default"):
         """
         Updates the main log
 
+        :param tag: The text tag (e.g. heal, damage, dot), defaults to 'comment'. Used to color the text.
         :param log: Text to insert
         """
 
         self.main_log_widget.configure(state="normal")
-        self.main_log_widget.insert("end", f"\n[{self.current_turn}] {log}")
+        self.main_log_widget.insert("end", f"\n[{self.current_turn}] {log}", tag)
         self.main_log_widget.see("end")
         self.main_log_widget.configure(state="disabled")
 
@@ -267,7 +298,9 @@ class Match:
         for entity in self.entities:
             for effect in entity.effects_fade_turn.get(self.current_turn, []):
                 entity.remove_effect(effect)
-                self.update_main_log(f"{effect.name} fades from {entity.name}")
+                tag = "e" if entity in self.enemies else "p"
+                tag += "_comment"
+                self.update_main_log(f"{effect.name} fades from {entity.name}", tag)
                 if effect.name == "Stuffed" and entity is self.player:
                     self.enable_food_buttons()
 
@@ -524,7 +557,7 @@ class Match:
         for enemy in self.enemies:
             # Handles DoTs, enemy-specific mechanics and attacks
             if enemy.next() == constants.ENEMY_STUNNED_STR:
-                self.update_main_log(f"{enemy.name} is immobilized")
+                self.update_main_log(f"{enemy.name} is immobilized", "e_comment")
 
         # Current turn ended, new turn started
         self.current_turn += 1
@@ -538,7 +571,7 @@ class Match:
         self.update_player_skill_buttons()
         # player.next() Handles DoTs and armor-specific mechanics
         if self.player.next() == constants.PLAYER_STUNNED_STR:
-            self.update_main_log(f"{self.player.name} is immobilized")
+            self.update_main_log(f"{self.player.name} is immobilized", "p_comment")
         for entity in self.entities:
             entity.update_rollback_data()
         self.update_detail_windows()
@@ -588,4 +621,4 @@ class Match:
         self.rotation_log_widget.insert("1.0", log)
         self.rotation_log_widget.configure(state="disabled")
         self.rotation_log_widget.see("end")
-        self.update_main_log(f"{self.player.name} undoes their last move")
+        self.update_main_log(f"{self.player.name} undoes their last move", "p_comment")

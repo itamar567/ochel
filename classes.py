@@ -118,7 +118,7 @@ class Pet:
         mpm_roll -= enemy_mpm
 
         if mpm_roll <= 0:
-            self.match.update_main_log(f"{self.name} missed {entity.name}")
+            self.match.update_main_log(f"{self.name} missed {entity.name}", f"{entity.tag_prefix}_missed")
             return constants.ATTACK_CODE_UNSUCCESSFUL
 
         bpd_type = utilities.dmg_type_2_bpd(dmg_type)
@@ -228,6 +228,7 @@ class Entity:
         self.max_mp = 100 + (level - 1) * 5 + stats.WIS * 5
         self.hp = self.max_hp
         self.mp = self.max_mp
+        self.tag_prefix = ""  # Used for coloring the main log, 'e' if the entity is an enemy, else 'p'
 
         # Bonuses
         self.bonuses["mpm"] = self.stats.LUK // 20
@@ -332,7 +333,7 @@ Effects:"""
             mpm_roll -= enemy_mpm
 
             if mpm_roll <= 0:
-                self.match.update_main_log(f"{self.name} missed {entity.name}")
+                self.match.update_main_log(f"{self.name} missed {entity.name}", f"{entity.tag_prefix}_missed")
                 return constants.ATTACK_CODE_UNSUCCESSFUL
 
             bpd_type = utilities.dmg_type_2_bpd(self.dmg_type)
@@ -424,14 +425,14 @@ Effects:"""
             self.mp = max(min(self.mp - damage, self.max_mp), 0)
             if damage < 0:
                 if dot:
-                    self.match.update_main_log(f"{self.name} recovers {-damage} MP from {entity.name}.")
+                    self.match.update_main_log(f"{self.name} recovers {-damage} MP from {entity.name}.", f"{self.tag_prefix}_mana_heal_dot")
                 else:
-                    self.match.update_main_log(f"{self.name} recovers {-damage} MP.")
+                    self.match.update_main_log(f"{self.name} recovers {-damage} MP.", f"{self.tag_prefix}_mana_heal")
             else:
                 if dot:
-                    self.match.update_main_log(f"{self.name} takes {damage} {element} damage to MP from {entity.name}.")
+                    self.match.update_main_log(f"{self.name} takes {damage} {element} damage to MP from {entity.name}.", f"{self.tag_prefix}_mana_dot")
                 else:
-                    self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage to MP.")
+                    self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage to MP.", f"{self.tag_prefix}_mana_attacked")
             return damage
         cap = self.resist_cap
         if element == "immobility":
@@ -442,9 +443,9 @@ Effects:"""
             damage = round(damage)
             self.hp = max(min(self.hp + damage, self.max_hp), 0)
             if dot:
-                self.match.update_main_log(f"{entity.name} heals {self.name} for {damage} HP.")
+                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
-                self.match.update_main_log(f"{self.name} recovers {damage} HP.")
+                self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
         else:
             damage = round(damage)
             if self.death_proof and not dot:
@@ -455,18 +456,18 @@ Effects:"""
                         damage = self.hp // 2
             self.hp -= damage
             if dot:
-                self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.")
+                self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.", f"{self.tag_prefix}_dot")
             else:
                 if glancing:
                     if crit:
-                        self.match.update_main_log(f"{entity.name} critically glances {self.name} for {damage} {element} damage.")
+                        self.match.update_main_log(f"{entity.name} critically glances {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_crit_glance")
                     else:
-                        self.match.update_main_log(f"{entity.name} glances {self.name} for {damage} {element} damage.")
+                        self.match.update_main_log(f"{entity.name} glances {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_glance")
                 else:
                     if crit:
-                        self.match.update_main_log(f"{entity.name} critically hits {self.name} for {damage} {element} damage.")
+                        self.match.update_main_log(f"{entity.name} critically hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_crit")
                     else:
-                        self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage.")
+                        self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked")
         return damage
 
     def remove_effect(self, effect, remove_from_fade=False):
@@ -621,6 +622,8 @@ class Player(Entity):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL):
         super().__init__(name, stats, level=level)
+
+        self.tag_prefix = "p"  # Used for coloring the main log, 'p' stands for player
 
         # Gear
         self.gear = {}
@@ -807,7 +810,7 @@ class Player(Entity):
         super().next()
 
         if self.stunned and utilities.chance(constants.PLAYER_STUN_CHANCE):
-            self.match.update_main_log(f"{self.name} is not affected by stun.")
+            self.match.update_main_log(f"{self.name} is not affected by stun.", f"{self.tag_prefix}_comment")
             return constants.PLAYER_STUNNED_STR
 
     def update_rollback_data(self):
@@ -923,6 +926,11 @@ class Player(Entity):
 
 
 class Enemy(Entity):
+    def __init__(self, name, stats, level=constants.MAX_LEVEL):
+        super().__init__(name, stats, level=level)
+
+        self.tag_prefix = "e"  # Used for coloring the main log, 'e' stands for enemy
+
     def player_double_turn_reaction(self):
         pass
 
@@ -947,8 +955,8 @@ class Enemy(Entity):
             damage = round(damage)
             self.hp = max(min(self.hp + damage, self.max_hp), 0)
             if dot:
-                self.match.update_main_log(f"{entity.name} heals {self.name} for {damage} HP.")
+                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
-                self.match.update_main_log(f"{self.name} recovers {damage} HP.")
+                self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
         else:
             super().attacked(damage, element, entity, dot, glancing, crit)
