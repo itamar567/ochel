@@ -547,6 +547,20 @@ Effects:"""
         if effect.death_proof:
             self.death_proof = True
 
+    def replace_effect(self, old_effect, new_effect):
+        """
+        Replaces an effect with a new one.
+
+        :param old_effect: The effect to replace
+        :param new_effect: The effect to replace the old effect with
+        """
+
+        effects_list = self.effects.copy()
+        self.remove_effect(old_effect)
+        self.add_effect(new_effect)
+        effects_list[effects_list.index(old_effect)] = new_effect
+        self.effects = effects_list
+
     def take_dot_damage(self, effect):
         """
         Takes DoT damage from an effect.
