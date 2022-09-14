@@ -181,12 +181,12 @@ class Chaosweaver(classes.Player):
 
     def skill_vengeance(self):
         for i in range(19):
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.092)
-        if self.empowered:
-            self.match.targeted_enemy.add_effect(effects.empowered_overwhelmed)
-            self.use_soulthread()
-        else:
-            self.match.targeted_enemy.add_effect(effects.overwhelmed)
+            if self.attack(self.match.targeted_enemy, damage_multiplier=0.092) == constants.ATTACK_CODE_SUCCESS:
+                if self.empowered:
+                    self.match.targeted_enemy.add_effect(effects.empowered_overwhelmed)
+                    self.use_soulthread()
+                else:
+                    self.match.targeted_enemy.add_effect(effects.overwhelmed)
 
     def skill_rebuke(self):
         damage_multiplier = 1.667
