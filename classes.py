@@ -240,7 +240,7 @@ class Entity:
         self.resists = {"health": -self.stats.WIS // 20}
         self.damage = (0, 0)
         self.armor = "???"
-        self.effects = set()
+        self.effects = []
         self.effects_fade_turn = {}
         self.death_proof = False
         self.resist_cap = math.inf
@@ -290,7 +290,8 @@ Resistances:"""
             result += f"\n        {key}: {self.resists[key]}"
         result += """
 Effects:"""
-        for effect in self.effects:
+        # The order the effects show in DF is the reversed order of self.effects
+        for effect in reversed(self.effects):
             result += f"\n        {effect.name}: "
             if len(effect.bonuses.keys()) > 0:
                 for bonus in effect.bonuses.keys():
@@ -537,7 +538,7 @@ Effects:"""
         if already_applied and effect.refreshable:
             fade_turn += 1
 
-        self.effects.add(effect)
+        self.effects.append(effect)
         utilities.add_value(self.effects_fade_turn, fade_turn, effect, dict_of_lists=True)
         for bonus in effect.bonuses.keys():
             utilities.add_value(self.bonuses, bonus, effect.bonuses[bonus])
