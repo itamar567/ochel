@@ -749,7 +749,7 @@ class Player(Entity):
                 utilities.add_value(self.gear_bonuses, bonus, item.bonuses[bonus])
             utilities.add_value(self.gear_bonuses_uncapped, bonus, item.bonuses[bonus])
 
-            self.bonuses[bonus] = self.bonuses[bonus] - old_gear_bonus + self.gear_bonuses[bonus]
+            self.bonuses[bonus] = self.bonuses.get(bonus, 0) - old_gear_bonus + self.gear_bonuses[bonus]
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
@@ -781,7 +781,7 @@ class Player(Entity):
             old_gear_resist = self.gear_resists[elem]
             self.gear_resists_uncapped[elem] -= item.resists[elem]
             self.gear_resists[elem] = min(self.gear_resists_uncapped[elem], constants.PER_ELEM_RESIST_CAP)
-            self.resists[elem] = self.resists[elem] - old_gear_resist + self.gear_resists[elem]
+            self.resists[elem] = self.resists.get(elem, 0) - old_gear_resist + self.gear_resists[elem]
 
         stats_changed = False
         old_stats = self.stats.copy()
@@ -796,7 +796,7 @@ class Player(Entity):
             self.gear_bonuses_uncapped[bonus] -= item.bonuses[bonus]
             self.gear_bonuses[bonus] = min(self.gear_bonuses_uncapped[bonus],
                                            (constants.CRIT_CAP if bonus == "crit" else math.inf))
-            self.bonuses[bonus] = self.bonuses[bonus] - old_gear_bonus + self.gear_bonuses[bonus]
+            self.bonuses[bonus] = self.bonuses.get(bonus) - old_gear_bonus + self.gear_bonuses[bonus]
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
