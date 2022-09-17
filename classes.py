@@ -796,7 +796,7 @@ class Player(Entity):
             self.gear_bonuses_uncapped[bonus] -= item.bonuses[bonus]
             self.gear_bonuses[bonus] = min(self.gear_bonuses_uncapped[bonus],
                                            (constants.CRIT_CAP if bonus == "crit" else math.inf))
-            self.bonuses[bonus] = self.bonuses.get(bonus) - old_gear_bonus + self.gear_bonuses[bonus]
+            self.bonuses[bonus] = self.bonuses.get(bonus, 0) - old_gear_bonus + self.gear_bonuses[bonus]
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
