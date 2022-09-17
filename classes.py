@@ -639,8 +639,11 @@ Effects:"""
 
 class Player(Entity):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
-                 mp_potion_level=constants.MP_POTION_MAX_LEVEL):
+                 mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
         super().__init__(name, stats, level=level)
+
+        if gear is None:
+            gear = {}
 
         self.tag_prefix = "p"  # Used for coloring the main log, 'p' stands for player
 
@@ -680,6 +683,13 @@ class Player(Entity):
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
 
+        for slot in gear.keys():
+            self.equip(slot, gear[slot], update_details=False)
+
+        # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
+        self.hp = self.max_hp
+        self.mp = self.max_mp
+
     def recalculate_bonuses(self, old_stats):
         """
         Recalculates the bonuses from stats
@@ -704,7 +714,7 @@ class Player(Entity):
             return
         if self.gear.get(slot, None) == item:
             return
-        self.unequip(slot, ignore_default_item=True)
+        self.unequip(slot, ignore_default_item=True, update_details=False)
         if slot == constants.SLOT_PET:
             self.match.pet = item
             self.match.pet.waking_up = True
@@ -753,18 +763,19 @@ class Player(Entity):
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
-            if self.match.pet.armor == "Kid Dragon":
+            if self.match is not None and self.match.pet.armor == "Kid Dragon":
                 self.match.pet.update_cooldowns_by_cha()
 
         if update_details:
             self.match.update_detail_windows()
 
-    def unequip(self, slot, ignore_default_item=False):
+    def unequip(self, slot, ignore_default_item=False, update_details=True):
         """
         Unequips an item.
 
         :param slot: The item's slot
         :param ignore_default_item: Whether to equip the default weapon upon unequipping a weapon or not.
+        :param update_details: Whether to update the detail window or not.
         """
 
         if slot == constants.SLOT_PET:
@@ -802,9 +813,10 @@ class Player(Entity):
             self.recalculate_bonuses(old_stats)
 
         if slot == constants.SLOT_WEAPON and not ignore_default_item:
-            self.equip(constants.SLOT_WEAPON, self.default_weapon)
+            self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
 
-        self.match.update_detail_windows()
+        if update_details:
+            self.match.update_detail_windows()
 
     def hp_potion(self):
         """

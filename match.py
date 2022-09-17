@@ -166,7 +166,7 @@ class Match:
         :param build_index: The index of the build to switch to (starts at 0)
         """
 
-        for slot in player_values.gear_builds[build_index]:
+        for slot in player_values.gear_builds[build_index].keys():
             self.player.equip(slot, player_values.gear_builds[build_index][slot])
         self.update_main_log(f"{self.player.name} switched to build {build_index + 1}", "p_comment")
         self.update_rotation_log(f"Switch to build {build_index + 1}", double_turn=True)
@@ -254,7 +254,7 @@ class Match:
             time.sleep(0.01)
 
         self.clear_window()
-        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level)
+        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=player_values.gear_builds[0])
 
     def choose_enemies(self):
         """

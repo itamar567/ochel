@@ -11,12 +11,13 @@ from gear import weapons
 
 class Chaosweaver(classes.Player):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
-                 mp_potion_level=constants.MP_POTION_MAX_LEVEL):
-        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level)
+                 mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
+        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
 
         self.armor = "Chaosweaver"
         self.default_weapon = weapons.Weaver_Blade
-        self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
+        if constants.SLOT_WEAPON not in gear.keys():
+            self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
         self.empowered = True
         self.soulthreads = 2
         self.skill_names = {"V": "Untangle", "C": "Snap", "0": "Rebuke", "9": "Venge", "8": "Rip",
@@ -232,11 +233,11 @@ class Chaosweaver(classes.Player):
 
 class Technomancer(classes.Player):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
-                 mp_potion_level=constants.MP_POTION_MAX_LEVEL):
-        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level)
+                 mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
+        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
 
         self.armor = "Technomancer"
-        self.heat_level = -1
+        self.heat_level = 0
         self.wis_threshold = self.level // 5
         self.old_mp = self.mp  # Will be used to check if the player had enough MP to use a skill before heat level reduced MP.
         self.drive_boost = lambda: math.floor((1 - (self.mp / self.max_mp)) * 100) * 2
@@ -244,7 +245,8 @@ class Technomancer(classes.Player):
         self.turns_until_drive_boost_enabled = 0
         self.start_wis = self.stats.WIS
         self.default_weapon = weapons.Laser_Screwdriver
-        self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
+        if constants.SLOT_WEAPON not in gear.keys():
+            self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
         self.skills = {"V": self.skill_force_sword, "C": self.skill_photon_bow, "0": self.skill_static_overload_blast,
                        "9": self.skill_mana_burst_grenades, "8": self.skill_enhanced_metallic_aging,
                        "7": self.skill_drillbit, "6": self.skill_event_horizon, " ": self.skill_attack,
@@ -282,8 +284,8 @@ class Technomancer(classes.Player):
         if self.match is not None:
             self.match.update_player_skill_buttons()
 
-    def unequip(self, slot, ignore_default_item=False):
-        super().unequip(slot)
+    def unequip(self, slot, ignore_default_item=False, update_details=True):
+        super().unequip(slot, ignore_default_item=ignore_default_item, update_details=update_details)
 
         self.old_mp = self.mp
         # The match class only sets self.match after the initialization, so when equipping the default weapon, match might be None
@@ -308,6 +310,7 @@ class Technomancer(classes.Player):
         self.old_mp = self.mp
         self.attacked(self.heat_level, "mana", entity=self)
         self.match.update_player_skill_buttons()
+        self.match.update_detail_windows()
 
         if self.drive_boost_enabled is False:
             if self.turns_until_drive_boost_enabled == 0:
