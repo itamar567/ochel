@@ -297,7 +297,7 @@ class Match:
         """
 
         for entity in self.entities:
-            for effect in entity.effects_fade_turn.get(self.current_turn, []):
+            for effect in entity.effects_fade_turn.get(self.current_turn, []).copy():
                 entity.remove_effect(effect)
                 self.update_main_log(f"{effect.name} fades from {entity.name}", f"{entity.tag_prefix}_comment")
                 if effect.name == "Stuffed" and entity is self.player:
