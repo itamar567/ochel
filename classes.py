@@ -307,7 +307,7 @@ Effects:"""
             result += f"{effect_duration} turn(s) left."
         return result
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True):
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
         """
         Attacks an entity.
         :param can_miss: Whether the attack can miss.
@@ -316,6 +316,7 @@ Effects:"""
         :param damage_multiplier: Multiplies the base damage.
         :param damage_additive: Added to the base damage.
         :param multiply_first: If True, the base damage will first be multiplied by damage_multiplier, then added to the damage_additive. else, first added then multiplied.
+        :param return_damage: If True, will return a tuple of the attack return value and the damage dealt.
         :return: constants.ATTACK_CODE_UNSUCCESSFUL if the attack resulted in a miss/glance, else constants.ATTACK_CODE_SUCCESS.
         """
 
@@ -371,18 +372,22 @@ Effects:"""
 
         if glancing:
             if crit:
-                entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True)
             else:
-                entity.attacked(damage * 0.1, self.element, self, glancing=True)
+                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True)
         else:
             if crit:
-                entity.attacked(damage, self.element, self, crit=True)
+                damage_dealt = entity.attacked(damage, self.element, self, crit=True)
             else:
-                entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self)
             self.on_hit_special(self.match, entity, damage)
             self.element = old_element
+            if return_damage:
+                return constants.ATTACK_CODE_SUCCESS, damage_dealt
             return constants.ATTACK_CODE_SUCCESS
         self.element = old_element
+        if return_damage:
+            return constants.ATTACK_CODE_UNSUCCESSFUL, damage_dealt
         return constants.ATTACK_CODE_UNSUCCESSFUL
 
     def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False):
@@ -438,7 +443,8 @@ Effects:"""
         cap = self.resist_cap
         if element == "immobility":
             cap = math.inf
-        resist = min(self.resists.get("all", 0) + self.resists.get(element, 0), cap)
+        all_resist = self.resists.get("all", 0) if element != "null" else 0  # Null attacks ignore all resist
+        resist = min(all_resist + self.resists.get(element, 0), cap)
         damage *= (100 - resist) / 100
         if element == "health":
             damage = round(damage)
@@ -971,5 +977,6 @@ class Enemy(Entity):
                 self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
                 self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
+            return damage
         else:
-            super().attacked(damage, element, entity, dot, glancing, crit)
+            return super().attacked(damage, element, entity, dot, glancing, crit)

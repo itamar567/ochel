@@ -306,9 +306,9 @@ class Technomancer(classes.Player):
         assert skill in self.mana_cost.keys()
         return self.mana_cost[skill] <= self.mp + self.heat_level - 1
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True):
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
         return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()),
-                              damage_additive=damage_additive, multiply_first=multiply_first, element=element, can_miss=can_miss)
+                              damage_additive=damage_additive, multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage)
 
     def skill_vent_heat(self):
         if self.attack(self.match.targeted_enemy,

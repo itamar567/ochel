@@ -15,7 +15,6 @@ Currently implemented enemies:
 
 - Dummy (100k HP)
 - Oratath
-- Suki
 
 ## Gear
 Refer to the [Gear folder](/gear) for a list of implemented items.
