@@ -505,7 +505,7 @@ class Match:
         """
 
         for skill in self.player.mana_cost.keys():
-            if self.player.mana_cost[skill] > self.player.mp:
+            if not self.player.check_mp_for_skill(skill):
                 self.buttons[skill][0]["state"] = "disabled"
             elif skill not in self.player.active_cooldowns.keys():
                 self.buttons[skill][0]["state"] = "normal"

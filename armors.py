@@ -1,3 +1,4 @@
+import math
 import random
 import tkinter
 
@@ -236,7 +237,9 @@ class Technomancer(classes.Player):
 
         self.armor = "Technomancer"
         self.heat_level = -1
-        self.drive_boost = lambda: (1 - (self.mp / self.max_mp)) * 2
+        self.wis_threshold = self.level // 5
+        self.old_mp = self.mp  # Will be used to check if the player had enough MP to use a skill before heat level reduced MP.
+        self.drive_boost = lambda: math.floor((1 - (self.mp / self.max_mp)) * 100) * 2
         self.drive_boost_enabled = True
         self.turns_until_drive_boost_enabled = 0
         self.start_wis = self.stats.WIS
@@ -260,6 +263,7 @@ class Technomancer(classes.Player):
         self.bonuses["crit"] += 5
 
         self.rollback_heat_level = [self.heat_level]
+        self.rollback_old_mp = [self.old_mp]
 
         self.update_skill_images()
 
@@ -267,34 +271,59 @@ class Technomancer(classes.Player):
         super().rollback()
         self.heat_level = self.rollback_heat_level[-2]
         self.rollback_heat_level.pop()
+        self.old_mp = self.rollback_old_mp[-2]
+        self.rollback_old_mp.pop()
 
     def equip(self, slot, item, update_details=True):
         super().equip(slot, item, update_details=update_details)
-        if abs(self.stats.WIS - self.start_wis) > self.level / 5:
-            self.drive_boost_enabled = False
-            self.turns_until_drive_boost_enabled = 3
+
+        self.old_mp = self.mp
+        # The match class only sets self.match after the initialization, so when equipping the default weapon, match might be None
+        if self.match is not None:
+            self.match.update_player_skill_buttons()
 
     def unequip(self, slot, ignore_default_item=False):
         super().unequip(slot)
 
-        if abs(self.stats.WIS - self.start_wis) > self.level / 5:
-            self.start_wis = self.stats.WIS
+        self.old_mp = self.mp
+        # The match class only sets self.match after the initialization, so when equipping the default weapon, match might be None
+        if self.match is not None:
+            self.match.update_player_skill_buttons()
+
+    def use_skill_button_onclick(self, event, attack_name=None):
+        super().use_skill_button_onclick(event, attack_name)
+
+        if abs(self.stats.WIS - self.start_wis) > self.wis_threshold:
             self.drive_boost_enabled = False
             self.turns_until_drive_boost_enabled = 3
+            self.start_wis = self.stats.WIS
+            self.match.update_main_log(f"WIS deviation of greater than {self.wis_threshold} detected. Drive Core Mismatch Error: Drive Boost recalibrating.")
 
     def next(self):
         return_value = super().next()
+        if return_value == constants.PLAYER_STUNNED_STR:
+            return return_value
+
+        self.heat_level = min(self.heat_level + 1, 20)
+        self.old_mp = self.mp
+        self.attacked(self.heat_level, "mana", entity=self)
+        self.match.update_player_skill_buttons()
+
         if self.drive_boost_enabled is False:
             if self.turns_until_drive_boost_enabled == 0:
                 self.drive_boost_enabled = True
             else:
                 self.turns_until_drive_boost_enabled -= 1
 
-        self.heat_level = min(self.heat_level + 1, 20)
-        self.mp = max(self.mp - self.heat_level, 0)
+        if self.drive_boost_enabled:
+            self.match.update_main_log(f"Heat Level: {self.heat_level} Drive Boost: {self.drive_boost()}", "p_comment")
+        else:
+            self.match.update_main_log(f"Heat Level: {self.heat_level} Drive Boost: Recalibrating for {self.turns_until_drive_boost_enabled + 1} turn(s)")
+
         self.rollback_heat_level.append(self.heat_level)
-        self.rollback_mp.pop()
-        self.rollback_mp.append(self.mp)
+        self.rollback_old_mp.append(self.old_mp)
+        # Replace the old mana rollback with the one updated with the heat level
+        self.rollback_mp[-1] = self.mp
 
         return return_value
 
@@ -304,10 +333,10 @@ class Technomancer(classes.Player):
         if skill == "M":
             return self.mp_potion_count > 0
         assert skill in self.mana_cost.keys()
-        return self.mana_cost[skill] <= self.mp + self.heat_level - 1
+        return self.mana_cost[skill] <= self.old_mp
 
     def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
-        return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()),
+        return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()/100),
                               damage_additive=damage_additive, multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage)
 
     def skill_vent_heat(self):
