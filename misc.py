@@ -2,15 +2,16 @@ import constants
 
 
 class Item:
-    def __init__(self, bonuses, resists):
+    def __init__(self, name, bonuses, resists):
+        self.name = name
         self.bonuses = bonuses
         self.resists = resists
 
 
 class Weapon(Item):
-    def __init__(self, dmg_type, element, min_damage, max_damage, bonuses, resists,
+    def __init__(self, name, dmg_type, element, min_damage, max_damage, bonuses, resists,
                  on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL):
-        super().__init__(bonuses, resists)
+        super().__init__(name, bonuses, resists)
         self.damage = (min_damage, max_damage)
         self.dmg_type = dmg_type
         self.element = element
