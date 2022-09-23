@@ -633,3 +633,28 @@ class Match:
         self.rotation_log_widget.configure(state="disabled")
         self.rotation_log_widget.see("end")
         self.update_main_log(f"{self.player.name} undoes their last move", "p_comment")
+
+    def export(self):
+        text = ""
+        if self.player.stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
+            text = "== Stats =="
+            if self.player.stats.__repr__() != "":
+                text += f"\n{self.player.stats}"
+            if isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != "":
+                text += f"\n{self.pet.stats}"
+            text += "\n\n"
+        text += "== Builds =="
+        for index, build in enumerate(player_values.gear_builds):
+            text += f"\n- Build {index}"
+            for slot in constants.SLOTS:
+                if slot in build.keys():
+                    text += "\n"
+                    if slot == constants.SLOT_WEAPON_SPECIAL:
+                        text += "Slotted: "
+                    text += build[slot].name
+            text += "\n"
+        hp_potions_used = 5 - self.player.hp_potion_count
+        mp_potions_used = 5 - self.player.mp_potion_count
+        text += "\n== Potions / Food =="
+        text += f"\n{hp_potions_used}x HP, {mp_potions_used}x MP potion(s) used"
+        return text

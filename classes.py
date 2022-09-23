@@ -17,8 +17,13 @@ class MainStats:
         self.WIS = stats_list[6]
 
     def __repr__(self):
-        return f"STR={self.STR}, DEX={self.DEX}, INT={self.INT}, CHA={self.CHA}," \
-               f" LUK={self.LUK}, END={self.END}, WIS={self.WIS}"
+        result = ""
+        for stat in self.to_list():
+            if stat[0] != 0:
+                if result != "":
+                    result += ", "
+                result += f"{stat[0]} {stat[1]}"
+        return result
 
     def copy(self):
         return MainStats([self.STR, self.DEX, self.INT, self.CHA, self.LUK, self.END, self.WIS])
@@ -47,6 +52,9 @@ class MainStats:
         else:
             return self.INT
 
+    def to_list(self):
+        return [(self.STR, "STR"), (self.DEX, "DEX"), (self.INT, "INT"), (self.CHA, "CHA"), (self.LUK, "LUK"), (self.END, "END"), (self.WIS, "WIS")]
+
 
 class PetStats:
     def __init__(self, stats_list):
@@ -55,6 +63,18 @@ class PetStats:
         self.fighting = stats_list[2]
         self.assistance = stats_list[3]
         self.mischief = stats_list[4]
+
+    def __repr__(self):
+        result = ""
+        for stat in self.to_list():
+            if stat[0] != 0:
+                if result != "":
+                    result += ", "
+                result += f"{stat[0]} {stat[1]}"
+        return result
+
+    def to_list(self):
+        return [(self.protection, "Protection"), (self.magic, "Magic"), (self.fighting, "Fighting"), (self.assistance, "Assistance"), (self.mischief, "Mischief")]
 
 
 class Pet:
