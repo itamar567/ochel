@@ -390,22 +390,25 @@ Effects:"""
             return constants.ATTACK_CODE_UNSUCCESSFUL, damage_dealt
         return constants.ATTACK_CODE_UNSUCCESSFUL
 
-    def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False):
+    def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
         """
         Attacks an entity with bonuses.
 
         :param bonuses: The bonuses to the attack
-        :param entity: The entity to attack
-        :param damage_multiplier: Multiplies the base damage
-        :param damage_additive: Added to the base damage
-        :param multiply_first: If True, the base damage will first be multiplied by damage_multiplier, then added to the damage_additive. else, first added then multiplied
-        :return: constants.ATTACK_CODE_UNSUCCESSFUL if the attack resulted in a miss/glance, else constants.ATTACK_CODE_SUCCESS
+        :param can_miss: Whether the attack can miss.
+        :param element: The element used in the attack, will use self.element if not specified.
+        :param entity: The entity to attack.
+        :param damage_multiplier: Multiplies the base damage.
+        :param damage_additive: Added to the base damage.
+        :param multiply_first: If True, the base damage will first be multiplied by damage_multiplier, then added to the damage_additive. else, first added then multiplied.
+        :param return_damage: If True, will return a tuple of the attack return value and the damage dealt.
+        :return: constants.ATTACK_CODE_UNSUCCESSFUL if the attack resulted in a miss/glance, else constants.ATTACK_CODE_SUCCESS.
         """
 
         for bonus in bonuses.keys():
             utilities.add_value(self.bonuses, bonus, bonuses[bonus])
         self.attack(entity, damage_multiplier=damage_multiplier, damage_additive=damage_additive,
-                    multiply_first=multiply_first)
+                    multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage)
         for bonus in bonuses.keys():
             utilities.add_value(self.bonuses, bonus, -bonuses[bonus])
             if self.bonuses[bonus] == 0:

@@ -39,6 +39,8 @@ class Oratath(classes.Enemy):
         self.max_mp = 6179
         self.mp = self.max_mp
 
+        self.armor = "Dragon"
+
         self.cooldowns = {"1": 6, "2": 0, "3": 10, "4": 20}
         self.active_cooldowns = {}
         self.skills = {"1": self.skill_1, "2": self.skill_2, "3": self.skill_3, "4": self.skill_4, "5": self.skill_5}
