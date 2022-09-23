@@ -15,7 +15,7 @@ class Chaosweaver(classes.Player):
         super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
 
         self.armor = "Chaosweaver"
-        self.default_weapon = weapons.Weaver_Blade
+        self.default_weapon = weapons.weaver_blade
         if constants.SLOT_WEAPON not in gear.keys():
             self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
         self.empowered = True
@@ -244,7 +244,7 @@ class Technomancer(classes.Player):
         self.drive_boost_enabled = True
         self.turns_until_drive_boost_enabled = 0
         self.start_wis = self.stats.WIS
-        self.default_weapon = weapons.Laser_Screwdriver
+        self.default_weapon = weapons.laser_screwdriver
         if constants.SLOT_WEAPON not in gear.keys():
             self.equip(constants.SLOT_WEAPON, self.default_weapon, update_details=False)
         self.skills = {"V": self.skill_force_sword, "C": self.skill_photon_bow, "0": self.skill_static_overload_blast,
