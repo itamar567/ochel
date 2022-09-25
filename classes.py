@@ -623,7 +623,7 @@ Effects:"""
         self.rollback_hp.append(self.hp)
         self.rollback_mp.append(self.mp)
         self.rollback_stun.append(self.stunned)
-        self.rollback_effect_fade_turn.append(self.effects_fade_turn.copy())
+        self.rollback_effect_fade_turn.append(utilities.copy_dict(self.effects_fade_turn))
 
     def rollback(self):
         """
@@ -643,7 +643,7 @@ Effects:"""
             self.add_effect(effect)
         self.rollback_effects.pop()
 
-        self.effects_fade_turn = self.rollback_effect_fade_turn[-2]
+        self.effects_fade_turn = utilities.copy_dict(self.rollback_effect_fade_turn[-2])
         self.rollback_effect_fade_turn.pop()
 
         self.bonuses = self.rollback_bonuses[-2].copy()

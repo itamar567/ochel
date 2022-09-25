@@ -94,3 +94,10 @@ def get_effect_duration(effect, effect_fade_turn, current_turn):
 
 def player_full_heal(match):
     match.player.attacked(9999999, "health")
+
+
+def copy_dict(dict_to_copy):
+    new_dict = {}
+    for key in dict_to_copy.keys():
+        new_dict[key] = dict_to_copy[key].copy()
+    return new_dict
