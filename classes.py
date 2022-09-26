@@ -236,11 +236,12 @@ class Pet:
 
 
 class Entity:
-    def __init__(self, name, stats, level=constants.MAX_LEVEL):
+    def __init__(self, name, stats, level=constants.MAX_LEVEL, race="???"):
         self.match = None
         self.element = None
         self.dmg_type = None
         self.name = name
+        self.race = race
         self.level = level
         self.stats = stats
         self.bonuses = {}
@@ -663,7 +664,7 @@ Effects:"""
 class Player(Entity):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
-        super().__init__(name, stats, level=level)
+        super().__init__(name, stats, level=level, race="human")
 
         if gear is None:
             gear = {}
@@ -980,8 +981,8 @@ class Player(Entity):
 
 
 class Enemy(Entity):
-    def __init__(self, name, stats, level=constants.MAX_LEVEL):
-        super().__init__(name, stats, level=level)
+    def __init__(self, name, stats, level=constants.MAX_LEVEL, race="???"):
+        super().__init__(name, stats, level=level, race="???")
 
         self.tag_prefix = "e"  # Used for coloring the main log, 'e' stands for enemy
 

@@ -20,7 +20,7 @@ class Dummy(classes.Enemy):
 class Oratath(classes.Enemy):
     def __init__(self, level):
         stats = classes.MainStats([16, 16, 16, 0, 0, 22, 0])
-        super().__init__("Oratath", stats, level=level)
+        super().__init__("Oratath", stats, level=level, race="dragon")
 
         self.bonuses["mpm"] = 3
         self.bonuses["parry"] = 1
@@ -38,8 +38,6 @@ class Oratath(classes.Enemy):
         self.hp = self.max_hp
         self.max_mp = 6179
         self.mp = self.max_mp
-
-        self.armor = "Dragon"
 
         self.cooldowns = {"1": 6, "2": 0, "3": 10, "4": 20}
         self.active_cooldowns = {}
