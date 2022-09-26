@@ -197,12 +197,22 @@ class Match:
         """
         Updates the main log
 
-        :param tag: The text tag (e.g. heal, damage, dot), defaults to 'comment'. Used to color the text.
+        :param tag: The text tag (e.g. heal, damage, dot), defaults to 'default'. Used to color the text.
+        :param log: Text to insert
+        """
+
+        self.update_main_log_without_turn_prefix(f"\n[{self.current_turn}] {log}", tag=tag)
+
+    def update_main_log_without_turn_prefix(self, log, tag="default"):
+        """
+        Updates the main log without a turn prefix and without a newline
+
+        :param tag: The text tag (e.g. heal, damage, dot), defaults to 'default'. Used to color the text.
         :param log: Text to insert
         """
 
         self.main_log_widget.configure(state="normal")
-        self.main_log_widget.insert("end", f"\n[{self.current_turn}] {log}", tag)
+        self.main_log_widget.insert("end", log, tag)
         self.main_log_widget.see("end")
         self.main_log_widget.configure(state="disabled")
 
@@ -567,6 +577,9 @@ class Match:
             # Handles DoTs, enemy-specific mechanics and attacks
             if enemy.next() == constants.ENEMY_STUNNED_STR:
                 self.update_main_log(f"{enemy.name} is immobilized", "e_comment")
+
+        # Add newline at the start of each turn
+        self.update_main_log_without_turn_prefix("\n")
 
         # Current turn ended, new turn started
         self.current_turn += 1
