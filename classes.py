@@ -459,7 +459,7 @@ Effects:"""
             if glancing:
                 return 0
             damage = round(damage)
-            self.mp = max(min(self.mp - damage, self.max_mp), 0)
+            self.mp = utilities.clamp(self.mp - damage, 0, self.max_mp)
             if damage < 0:
                 if dot:
                     self.match.update_main_log(f"{self.name} recovers {-damage} MP from {entity.name}.", f"{self.tag_prefix}_mana_heal_dot")
@@ -479,7 +479,7 @@ Effects:"""
         damage *= (100 - resist) / 100
         if element == "health":
             damage = round(damage)
-            self.hp = max(min(self.hp + damage, self.max_hp), 0)
+            self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
             if dot:
                 self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
@@ -1021,7 +1021,7 @@ class Enemy(Entity):
             if resist > 100 and not dot:  # Enemies with 100+ health resist heal for 1 HP from sources that aren't HoTs.
                 damage = 1
             damage = round(damage)
-            self.hp = max(min(self.hp + damage, self.max_hp), 0)
+            self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
             if dot:
                 self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
