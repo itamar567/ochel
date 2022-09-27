@@ -4,8 +4,8 @@ import tkinter
 
 import classes
 import constants
+import misc
 import utilities
-import effects
 from gear import weapons
 
 
@@ -48,6 +48,23 @@ class Chaosweaver(classes.Player):
 
         self.rollback_soulthreads = [self.soulthreads]
         self.rollback_bonuses = [self.bonuses.copy()]
+
+        # Effects
+        self.available_effects.soul_gambit = lambda: misc.Effect("Soul Gambit", "chaosweaver_soul_gambit", 8, {"mpm": -200, "bpd": -200}, {"all": -60, "health": +60})
+        self.available_effects.empowered_soul_boost = lambda: misc.Effect("Soul Boost", "chaosweaver_soul_boost", 4, {"boost": 175, "bonus": 200}, {})
+        self.available_effects.soul_boost = lambda: misc.Effect("Soul Boost", "chaosweaver_soul_boost", 5, {"boost": 175, "bonus": 200}, {})
+        self.available_effects.empowered_soul_aegis = lambda: misc.Effect("Empowered Soul Aegis", "chaosweaver_soul_aegis", 3, {}, {"immobility": 100}, death_proof=True)
+        self.available_effects.soul_aegis = lambda: misc.Effect("Soul Aegis", "chaosweaver_soul_aegis", 2, {}, {}, death_proof=True)
+        self.available_effects.soul_hunter = lambda: misc.Effect("Soul Hunter", "chaosweaver_soul_hunter", 3, {"crit": 50}, {})
+        self.available_effects.mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 4, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem))
+        self.available_effects.empowered_mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 10, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem))
+        self.available_effects.shredded_soul = lambda: misc.Effect("Shredded Soul", "chaosweaver_shredded_soul", 1, {}, {}, stun=True)
+        self.available_effects.soul_damage = lambda: misc.Effect("Soul Damage", "chaosweaver_soul_damage", 2, {"bonus": -75}, {})
+        self.available_effects.rippen_soul = lambda: misc.Effect("Rippen Soul", "chaosweaver_ripped_soul", 1, {}, {}, stun=True)
+        self.available_effects.empowered_overwhelmed = lambda: misc.Effect("Overwhelmed", "chaosweaver_overwhelmed", 4, {}, {"all": -20, "health": 50})
+        self.available_effects.overwhelmed = lambda: misc.Effect("Overwhelmed", "chaosweaver_overwhelmed", 4, {}, {"all": -20, "health": 20})
+        self.available_effects.soul_annihilation = lambda damage: misc.Effect("Soul Annihilation", "chaosweaver_soul_annihilation", 1, {}, {}, dot=misc.DoT(damage, damage, "nan"))
+        self.available_effects.soul_torn = lambda dpt_min, dpt_max: misc.Effect("Soul Torn", "chaosweaver_soul_torn", 1, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "nan"))
 
     def use_skill_button_onclick(self, event, attack_name=None):
         if event.widget["state"] == "disabled":
@@ -98,21 +115,21 @@ class Chaosweaver(classes.Player):
 
     def skill_soul_aegis(self):
         if self.empowered:
-            self.add_effect(effects.empowered_soul_aegis)
+            self.add_effect(self.available_effects.empowered_soul_aegis())
             self.use_soulthread()
             return
-        self.add_effect(effects.soul_aegis)
+        self.add_effect(self.available_effects.soul_aegis())
 
     def skill_soul_gambit(self):
-        self.add_effect(effects.soul_gambit)
+        self.add_effect(self.available_effects.soul_gambit())
         if self.empowered:
-            self.add_effect(effects.empowered_soul_boost)
+            self.add_effect(self.available_effects.empowered_soul_boost())
             self.use_soulthread()
             return constants.SKILL_RETURN_CODE_DOUBLE_TURN
-        self.add_effect(effects.soul_boost)
+        self.add_effect(self.available_effects.soul_boost())
 
     def skill_soul_slice(self):
-        self.add_effect(effects.soul_hunter)
+        self.add_effect(self.available_effects.soul_hunter())
         self.attack(self.match.targeted_enemy)
         self.attack(self.match.targeted_enemy)
 
@@ -129,9 +146,9 @@ class Chaosweaver(classes.Player):
         if hit:
             dot_dpt = utilities.dot_dpt(self, 0.5)
             if self.empowered:
-                self.match.targeted_enemy.add_effect(effects.empowered_mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
+                self.match.targeted_enemy.add_effect(self.available_effects.empowered_mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
             else:
-                self.match.targeted_enemy.add_effect(effects.mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
+                self.match.targeted_enemy.add_effect(self.available_effects.mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
         if self.empowered:
             self.use_soulthread()
 
@@ -147,12 +164,12 @@ class Chaosweaver(classes.Player):
         if self.empowered:
             self.use_soulthread()
             if even_hit:
-                self.match.targeted_enemy.add_effect(effects.soul_damage)
+                self.match.targeted_enemy.add_effect(self.available_effects.soul_damage())
             if odd_hit:
-                self.match.targeted_enemy.add_effect(effects.shredded_soul)
+                self.match.targeted_enemy.add_effect(self.available_effects.shredded_soul())
             return
         if even_hit or odd_hit:
-            self.match.targeted_enemy.add_effect(effects.shredded_soul)
+            self.match.targeted_enemy.add_effect(self.available_effects.shredded_soul())
 
     def skill_soul_assault(self):
         self.add_soulthread()
@@ -179,16 +196,16 @@ class Chaosweaver(classes.Player):
     def skill_soul_rip(self):
         for entity in self.match.enemies:
             if self.attack(entity) == constants.ATTACK_CODE_SUCCESS:
-                entity.add_effect(effects.rippen_soul)
+                entity.add_effect(self.available_effects.rippen_soul())
 
     def skill_vengeance(self):
         for i in range(19):
             if self.attack(self.match.targeted_enemy, damage_multiplier=0.092) == constants.ATTACK_CODE_SUCCESS:
                 if self.empowered:
-                    self.match.targeted_enemy.add_effect(effects.empowered_overwhelmed)
+                    self.match.targeted_enemy.add_effect(self.available_effects.empowered_overwhelmed())
                     self.use_soulthread()
                 else:
-                    self.match.targeted_enemy.add_effect(effects.overwhelmed)
+                    self.match.targeted_enemy.add_effect(self.available_effects.overwhelmed())
 
     def skill_rebuke(self):
         damage_multiplier = 1.667
@@ -220,10 +237,10 @@ class Chaosweaver(classes.Player):
                 or (self.match.targeted_enemy.max_hp >= 5 * self.max_hp
                     and self.match.targeted_enemy.hp <= 0.05 * self.match.targeted_enemy.max_hp):
             self.match.targeted_enemy.add_effect(
-                effects.soul_annihilation(self.match.targeted_enemy.hp * self.dot_multiplier))
+                self.available_effects.soul_annihilation(self.match.targeted_enemy.hp * self.dot_multiplier))
         else:
             dot_dpt = utilities.dot_dpt(self, 3)
-            self.match.targeted_enemy.add_effect(effects.soul_torn(dot_dpt[0], dot_dpt[1]))
+            self.match.targeted_enemy.add_effect(self.available_effects.soul_torn(dot_dpt[0], dot_dpt[1]))
 
     def skill_untangle(self):
         self.add_soulthread()
@@ -268,6 +285,17 @@ class Technomancer(classes.Player):
         self.rollback_old_mp = [self.old_mp]
 
         self.update_skill_images()
+
+        # Effects
+        self.available_effects.vent_heat = lambda heat_level: misc.Effect("Vent Heat", "technomancer_vent_heat", 4, {}, {"health": 5 * heat_level})
+        self.available_effects.tog_drone = lambda: misc.Effect("Tog-Drone", "technomancer_tog_drone", 6, {"boost": 50, "bonus": 100, "crit": 50}, {})
+        self.available_effects.booming_noise = lambda: misc.Effect("Blooming Noise", "technomancer_blooming_noise", 1, {}, {"immobility": -50})
+        self.available_effects.sonic_blasted = lambda: misc.Effect("Sonic Blasted", "technomancer_sonic_blasted", 1, {}, {}, stun=True)
+        self.available_effects.magnetic_personality = lambda hot_value: misc.Effect("Magnetic Personality", "technomancer_magnetic_personality", 3, {}, {}, dot=misc.DoT(hot_value, hot_value, "health"))
+        self.available_effects.barrier = lambda: misc.Effect("Barrier", "technomancer_barrier", 2, {"mpm": 200}, {})
+        self.available_effects.crushed = lambda: misc.Effect("Crushed", "technomancer_crushed", 4, {}, {"all": -50, "health": 50})
+        self.available_effects.stunned = lambda: misc.Effect("Stunned", "technomancer_stunned", 2, {}, {})
+        self.available_effects.rusting = lambda dpt_min, dpt_max: misc.Effect("Rusting", "technomancer_rusting", 6, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "metal"))
 
     def rollback(self):
         super().rollback()
@@ -345,21 +373,21 @@ class Technomancer(classes.Player):
     def skill_vent_heat(self):
         if self.attack(self.match.targeted_enemy,
                        damage_multiplier=0.1 * self.heat_level) == constants.ATTACK_CODE_SUCCESS:
-            self.match.targeted_enemy.add_effect(effects.vent_heat(self.heat_level))
+            self.match.targeted_enemy.add_effect(self.available_effects.vent_heat(self.heat_level))
         self.heat_level = -1
 
     def skill_tog_drone_tracking(self):
         self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
-        self.add_effect(effects.tog_drone)
+        self.add_effect(self.available_effects.tog_drone())
 
     def skill_sonic_boom_blaster(self):
-        self.match.targeted_enemy.add_effect(effects.booming_noise)
+        self.match.targeted_enemy.add_effect(self.available_effects.booming_noise())
         if self.attack(self.match.targeted_enemy) == constants.ATTACK_CODE_SUCCESS:
-            self.match.targeted_enemy.add_effect(effects.sonic_blasted)
+            self.match.targeted_enemy.add_effect(self.available_effects.sonic_blasted())
 
     def skill_magnetic_resonance_protocol(self):
         self.attacked(0.2 * self.max_hp, "health")
-        self.add_effect(effects.magnetic_personality(0.05 * self.max_hp))
+        self.add_effect(self.available_effects.magnetic_personality(0.05 * self.max_hp))
 
     def skill_mana_eruption(self):
         self.attacked(-0.2 * self.max_mp, "mana")
@@ -371,7 +399,7 @@ class Technomancer(classes.Player):
             self.match.update_player_cooldowns()
 
     def skill_reactive_barrier(self):
-        self.add_effect(effects.barrier)
+        self.add_effect(self.available_effects.barrier())
 
     def skill_attack(self):
         self.attack(self.match.targeted_enemy)
@@ -379,7 +407,7 @@ class Technomancer(classes.Player):
     def skill_event_horizon(self):
         for i in range(2):
             if self.attack(self.match.targeted_enemy, damage_multiplier=0.55) == constants.ATTACK_CODE_SUCCESS:
-                self.match.targeted_enemy.add_effect(effects.crushed)
+                self.match.targeted_enemy.add_effect(self.available_effects.crushed())
 
     def skill_drillbit(self):
         hit = False
@@ -387,12 +415,12 @@ class Technomancer(classes.Player):
             if self.attack(self.match.targeted_enemy, damage_multiplier=0.25) == constants.ATTACK_CODE_SUCCESS:
                 hit = True
         if hit:
-            self.match.targeted_enemy.add_effect(effects.stunned)
+            self.match.targeted_enemy.add_effect(self.available_effects.stunned())
 
     def skill_enhanced_metallic_aging(self):
         if self.attack(self.match.targeted_enemy) == constants.ATTACK_CODE_SUCCESS:
             dpt = utilities.dot_dpt(self, 1)
-            self.match.targeted_enemy.add_effect(effects.rusting(dpt[0], dpt[1]))
+            self.match.targeted_enemy.add_effect(self.available_effects.rusting(dpt[0], dpt[1]))
 
     def skill_mana_burst_grenades(self):
         for i in range(3):

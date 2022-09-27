@@ -1,8 +1,8 @@
 import math
 
-import effects
 import classes
 import constants
+import misc
 import utilities
 
 
@@ -69,6 +69,16 @@ class PetKidDragon(classes.Pet):
         self.update_cooldowns_by_cha()
         self.update_skill_images()
 
+        # Effects
+        self.available_effects.noxious_fumes = lambda mischief: misc.Effect("Noxious Fumes", "kid_dragon_noxious_fumes", 1, {}, {"immobility": -mischief//2})
+        self.available_effects.dragon_fumes = lambda: misc.Effect("Dragon Fumes", "kid_dragon_dragon_fumes", 1, {}, {}, stun=True)
+        self.available_effects.dragon_scout = lambda assistance: misc.Effect("Dragon Scout", "kid_dragon_dragon_scout", 5, {"bonus": assistance//2}, {})
+        self.available_effects.tail_lash = lambda fighting, elem: misc.Effect("Tail Lash", "kid_dragon_tail_lash", 3, {}, {}, dot=misc.DoT(5 + fighting//4, 15 + fighting//4, elem))
+        self.available_effects.dragons_scales = lambda protection: misc.Effect("Dragon's Scales", "kid_dragon_dragon_scales", 2, {"mpm": protection}, {})
+        self.available_effects.outrage = lambda fighting, elem: misc.Effect("Outrage", "kid_dragon_outrage", 3, {}, {}, dot=misc.DoT(5 + fighting // 2, 15 + fighting // 2, elem))
+        self.available_effects.power_boost = lambda assistance: misc.Effect("Power Boost", "kid_dragon_power_boost", 3, {"boost": 5 + assistance // 10}, {})
+        self.available_effects.tickles = lambda mischief: misc.Effect("Tickles", "kid_dragon_tickles", 3, {"boost": -mischief // 10}, {"all": -mischief // 20, "health": mischief // 20})
+
     def update_cooldowns_by_cha(self):
         old_cha_cooldown_reduce = self.cha_cooldown_reduce
         self.cha_cooldown_reduce = self.match.player.stats.CHA // 50
@@ -89,17 +99,17 @@ class PetKidDragon(classes.Pet):
             self.attack_with_bonus({"crit": 200}, self.targeted_enemy, damage_multiplier=0.5)
 
     def skill_noxious_fumes(self):
-        self.targeted_enemy.add_effect(effects.noxious_fumes(self.stats.mischief))
+        self.targeted_enemy.add_effect(self.available_effects.noxious_fumes(self.stats.mischief))
         if self.attack(self.targeted_enemy) == constants.ATTACK_CODE_SUCCESS:
-            self.targeted_enemy.add_effect(effects.dragon_fumes)
+            self.targeted_enemy.add_effect(self.available_effects.dragon_fumes())
 
     def skill_dragon_scout(self):
-        self.match.player.add_effect(effects.dragon_scout(self.stats.assistance))
+        self.match.player.add_effect(self.available_effects.dragon_scout(self.stats.assistance))
 
     def skill_tail_lash(self):
         if self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.fighting // 400),
                        dmg_type=constants.DMG_TYPE_MELEE) == constants.ATTACK_CODE_SUCCESS:
-            self.targeted_enemy.add_effect(effects.tail_lash(self.stats.fighting, self.element))
+            self.targeted_enemy.add_effect(self.available_effects.tail_lash(self.stats.fighting, self.element))
 
     def skill_magic_beam(self):
         self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.magic // 200))
@@ -108,7 +118,7 @@ class PetKidDragon(classes.Pet):
         self.match.player.attacked(self.match.player.max_hp * (4 + (2 + self.stats.protection) // 25) / 100, "health", self)
 
     def skill_dragons_scales(self):
-        self.match.player.add_effect(effects.dragons_scales(self.stats.protection))
+        self.match.player.add_effect(self.available_effects.dragons_scales(self.stats.protection))
 
     def skill_elemental_supernova(self):
         self.attack_with_bonus({"crit": self.stats.magic}, self.targeted_enemy,
@@ -121,10 +131,10 @@ class PetKidDragon(classes.Pet):
                            damage_multiplier=(40 + self.stats.fighting / 10) // 100) == constants.ATTACK_CODE_SUCCESS:
                 hit = True
         if hit:
-            self.targeted_enemy.add_effect(effects.outrage(self.stats.fighting, self.element))
+            self.targeted_enemy.add_effect(self.available_effects.outrage(self.stats.fighting, self.element))
 
     def skill_overcharge(self):
-        self.match.player.add_effect(effects.power_boost(self.stats.assistance))
+        self.match.player.add_effect(self.available_effects.power_boost(self.stats.assistance))
 
     def skill_tickles(self):
-        self.targeted_enemy.add_effect(effects.tickles(self.stats.mischief))
+        self.targeted_enemy.add_effect(self.available_effects.tickles(self.stats.mischief))

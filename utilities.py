@@ -101,3 +101,7 @@ def copy_dict(dict_to_copy):
     for key in dict_to_copy.keys():
         new_dict[key] = dict_to_copy[key].copy()
     return new_dict
+
+
+def clamp(value, minimum, maximum):
+    return min(maximum, max(value, minimum))

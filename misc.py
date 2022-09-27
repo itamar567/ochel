@@ -1,3 +1,5 @@
+import random
+
 import constants
 
 
@@ -25,20 +27,49 @@ class Food:
         self.use_function = use_function
 
 
+class Retaliation:
+    def __init__(self, dmg_min, dmg_max, multiplier, next_multiplier):
+        """
+        :param dmg_min: The minimum for the retaliation damage
+        :param dmg_max: The maximum for the retaliation damage
+        :param multiplier: The multiplier for the retaliation damage
+        :param next_multiplier: A function that gets the current multiplier as an input and returns an updated multiplier after receiving a hit
+        """
+        self.dmg_min = dmg_min
+        self.dmg_max = dmg_max
+        self.multiplier = multiplier
+        self.next_multiplier = next_multiplier
+
+    def get_damage(self):
+        dmg = random.randint(self.dmg_min, self.dmg_max)
+        dmg *= self.multiplier
+        dmg = round(dmg)
+        self.multiplier = self.next_multiplier(self.multiplier)  # Update the damage multiplier
+        return dmg
+
+
+class DoT:
+    def __init__(self, dmg_min, dmg_max, element):
+        self.dmg_min = dmg_min
+        self.dmg_max = dmg_max
+        self.element = element
+
+    def get_damage(self):
+        return random.randint(self.dmg_min, self.dmg_max)
+
+
 class Effect:
-    def __init__(self, name, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False):
+    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None):
         self.name = name
+        self.identifier = identifier
         self.duration = duration
         self.bonuses = bonuses
         self.resists = resists
         self.death_proof = death_proof
         self.refreshable = refreshable
-        if dot is None:
-            self.dot_elem = None
-            self.dot_dpt_min = None
-            self.dot_dpt_max = None
-        else:
-            self.dot_elem = dot[0]
-            self.dot_dpt_min = dot[1]
-            self.dot_dpt_max = dot[2]
+        self.retaliation = retaliation
+        self.dot = dot
         self.stun = stun
+
+    def __eq__(self, other):
+        return self.identifier == other.identifier

@@ -1,6 +1,6 @@
 import classes
 import constants
-import effects
+import misc
 import utilities
 
 
@@ -50,15 +50,9 @@ class Oratath(classes.Enemy):
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
 
-    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False):
-        damage_taken = super().attacked(damage, element, entity, dot, glancing, crit)
-        if not dot and effects.holy_shield in self.effects and entity == self.match.player:
-            damage = round(self.damage[0] * self.skill_1_multiplier)
-            self.match.update_main_log(f"{entity.name} takes {damage} damage.", "p_attacked")
-            entity.hp -= damage
-            self.skill_1_multiplier /= 2
-
-        return damage_taken
+        # Effects
+        self.available_effects.holy_shield = lambda: misc.Effect("Holy Shield", "oratath_holy_shield", 3, {"bpd": 180}, {}, retaliation=misc.Retaliation(self.damage[0], self.damage[1], 0.75, lambda multiplier: multiplier/2))
+        self.available_effects.blind = lambda: misc.Effect("Blind", "oratath_blind", 4, {"bonus": -40}, {})
 
     def reduce_cooldowns(self):
         to_pop = []
@@ -90,7 +84,7 @@ class Oratath(classes.Enemy):
 
     def skill_1(self):
         self.match.update_main_log("Mystical energies surround Oratath!", "e_comment")
-        self.add_effect(effects.holy_shield)
+        self.add_effect(self.available_effects.holy_shield())
         self.skill_1_multiplier = 0.75
         for i in range(4):
             self.attack(self.match.player)
@@ -106,7 +100,7 @@ class Oratath(classes.Enemy):
             if self.attack(self.match.player) == constants.ATTACK_CODE_SUCCESS:
                 hit = True
         if hit:
-            self.match.player.add_effect(effects.blind)
+            self.match.player.add_effect(self.available_effects.blind())
 
     def skill_4(self):
         self.match.update_main_log("Oratath regenerates!", "e_comment")

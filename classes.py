@@ -1,6 +1,7 @@
 import math
 import random
 import tkinter
+import types
 
 import constants
 import utilities
@@ -97,6 +98,9 @@ class Pet:
         self.active_cooldowns = {}
         self.waking_up = False
         self.armor = "???"
+
+        # Can be used by the entity to store the effects that it can apply/inflict
+        self.available_effects = types.SimpleNamespace()
 
         # Rollback data
         self.rollback_cooldown = [self.active_cooldowns.copy()]
@@ -270,6 +274,9 @@ class Entity:
         self.dot_multiplier = min(1 + self.stats.DEX / 400, 2)  # DEX DoT multiplier caps at +100%
         self.on_hit_special = constants.DEFAULT_ON_HIT_SPECIAL
 
+        # Can be used by the entity to store the effects that it can apply/inflict
+        self.available_effects = types.SimpleNamespace()
+
         # Rollback data
         self.rollback_bonuses = [self.bonuses.copy()]
         self.rollback_resists = [self.resists.copy()]
@@ -278,7 +285,7 @@ class Entity:
         self.rollback_death_proof = [self.death_proof]
         self.rollback_effects = [self.effects.copy()]
         self.rollback_stun = [False]
-        self.rollback_effect_fade_turn = [{}]
+        self.rollback_effect_fade_turn = [self.effects_fade_turn.copy()]
 
     def recalculate_bonuses(self, old_stats):
         """
@@ -320,8 +327,8 @@ Effects:"""
             if len(effect.resists.keys()) > 0:
                 for elem in effect.resists.keys():
                     result += f"{utilities.num_to_str_with_plus_minus_sign(effect.resists[elem])} {elem}, "
-            if effect.dot_dpt_min is not None:
-                result += f"{effect.dot_dpt_min}-{effect.dot_dpt_max} damage per turn, "
+            if effect.dot is not None:
+                result += f"{effect.dot.dmg_min}-{effect.dot.dmg_max} damage per turn, "
             if effect.stun:
                 result += "stunned, "
             effect_duration = utilities.get_effect_duration(effect, self.effects_fade_turn, self.match.current_turn)
@@ -478,6 +485,12 @@ Effects:"""
             else:
                 self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
         else:
+            for effect in self.effects:
+                if effect.retaliation is not None and entity is not self.match.pet:
+                    dmg = effect.retaliation.get_damage()
+                    entity.hp = utilities.clamp(entity.hp - dmg, 0, entity.max_hp)
+                    self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
+
             damage = round(damage)
             if self.death_proof and not dot:
                 if damage >= self.hp:
@@ -510,7 +523,7 @@ Effects:"""
 
         removed = False
         for eff in self.effects:
-            if eff.name == effect.name:
+            if eff == effect:
                 self.effects.remove(eff)
                 removed = True
                 break
@@ -533,7 +546,7 @@ Effects:"""
         latest_effect_instance = None
         for turn in self.effects_fade_turn.keys():
             for eff in self.effects_fade_turn[turn]:
-                if eff.name == effect.name:
+                if eff == effect:
                     if turn > latest_effect_fade_turn:
                         latest_effect_fade_turn = turn
                         latest_effect_instance = eff
@@ -559,7 +572,7 @@ Effects:"""
 
         already_applied = False
         for eff in self.effects:
-            if effect.name == eff.name:
+            if effect == eff:
                 already_applied = True
                 self.remove_effect(effect)
                 break
@@ -598,8 +611,8 @@ Effects:"""
         :param effect: The effect to take DoT damage from.
         """
 
-        self.attacked(random.randint(math.floor(effect.dot_dpt_min), math.floor(effect.dot_dpt_max)),
-                      effect.dot_elem, effect, dot=True)
+        self.attacked(random.randint(math.floor(effect.dot.dmg_min), math.floor(effect.dot.dmg_max)),
+                      effect.dot.element, effect, dot=True)
 
     def next(self):
         """
@@ -609,7 +622,7 @@ Effects:"""
             return
 
         for effect in self.effects:
-            if effect.dot_dpt_min is not None:
+            if effect.dot is not None:
                 self.take_dot_damage(effect)
 
     def update_rollback_data(self):

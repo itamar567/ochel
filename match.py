@@ -2,10 +2,10 @@ import time
 import tkinter
 import tkinter.scrolledtext
 
-import effects
 import classes
 import constants
 import match_constants
+import misc
 import pets
 import player_values
 
@@ -310,7 +310,7 @@ class Match:
             for effect in entity.effects_fade_turn.get(self.current_turn, []).copy():
                 entity.remove_effect(effect)
                 self.update_main_log(f"{effect.name} fades from {entity.name}", f"{entity.tag_prefix}_comment")
-                if effect.name == "Stuffed" and entity is self.player:
+                if effect.identifier == "food_stuffed" and entity is self.player:
                     self.enable_food_buttons()
 
     def update_player_cooldowns(self, reduce_cooldowns=True):
@@ -360,7 +360,7 @@ class Match:
         if event.widget["state"] == "disabled":
             return
         food = self.food_by_name[event.widget["text"]]
-        self.player.add_effect(effects.stuffed(food.stuffed_duration))
+        self.player.add_effect(misc.Effect("Stuffed", "food_stuffed", food.stuffed_duration, {}, {}))
         food.use_function(self)
         self.disable_food_buttons()
         self.update_rotation_log(food.name, double_turn=True)
@@ -454,7 +454,7 @@ class Match:
         self.enable_build_buttons()
         stuffed = False
         for effect in self.player.effects:
-            if effect.name == "Stuffed":
+            if effect.identifier == "food_stuffed":
                 stuffed = True
         if not stuffed:
             self.enable_food_buttons()
