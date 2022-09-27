@@ -86,9 +86,9 @@ class PetKidDragon(classes.Pet):
             self.cooldowns[skill] = max(self.cooldowns[skill] - self.cha_cooldown_reduce + old_cha_cooldown_reduce, 0)
 
     def skill_attack(self):
-        if utilities.chance(self.stats.magic // 400):
+        if utilities.chance(self.stats.magic / 400):
             self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.magic / 500))
-        elif utilities.chance(self.stats.fighting // 400, out_of=1 - self.stats.magic // 400):
+        elif utilities.chance(self.stats.fighting // 400, out_of=1 - self.stats.magic / 400):
             self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.fighting / 500),
                         dmg_type=constants.DMG_TYPE_MELEE)
         else:
@@ -107,15 +107,15 @@ class PetKidDragon(classes.Pet):
         self.match.player.add_effect(self.available_effects.dragon_scout(self.stats.assistance))
 
     def skill_tail_lash(self):
-        if self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.fighting // 400),
+        if self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.fighting / 400),
                        dmg_type=constants.DMG_TYPE_MELEE) == constants.ATTACK_CODE_SUCCESS:
             self.targeted_enemy.add_effect(self.available_effects.tail_lash(self.stats.fighting, self.element))
 
     def skill_magic_beam(self):
-        self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.magic // 200))
+        self.attack(self.targeted_enemy, damage_multiplier=(1 + self.stats.magic / 200))
 
     def skill_heal_ally(self):
-        self.match.player.attacked(self.match.player.max_hp * (4 + (2 + self.stats.protection) // 25) / 100, "health", self)
+        self.match.player.attacked(self.match.player.max_hp * (4 + (2 + self.stats.protection) / 25) / 100, "health", self)
 
     def skill_dragons_scales(self):
         self.match.player.add_effect(self.available_effects.dragons_scales(self.stats.protection))
@@ -128,7 +128,7 @@ class PetKidDragon(classes.Pet):
         hit = False
         for i in range(4):
             if self.attack(self.targeted_enemy,
-                           damage_multiplier=(40 + self.stats.fighting / 10) // 100) == constants.ATTACK_CODE_SUCCESS:
+                           damage_multiplier=(40 + self.stats.fighting / 10) / 100) == constants.ATTACK_CODE_SUCCESS:
                 hit = True
         if hit:
             self.targeted_enemy.add_effect(self.available_effects.outrage(self.stats.fighting, self.element))
