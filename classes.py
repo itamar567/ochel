@@ -486,7 +486,7 @@ Effects:"""
                 self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
         else:
             for effect in self.effects:
-                if effect.retaliation is not None and entity is not self.match.pet:
+                if effect.retaliation is not None and entity is not self.match.pet and not dot:
                     dmg = effect.retaliation.get_damage()
                     entity.hp = utilities.clamp(entity.hp - dmg, 0, entity.max_hp)
                     self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
