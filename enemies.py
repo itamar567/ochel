@@ -49,6 +49,7 @@ class Oratath(classes.Enemy):
         self.rollback_resists = [self.resists.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
+        self.rollback_active_cooldowns = [self.active_cooldowns.copy()]
 
         # Effects
         self.available_effects.holy_shield = lambda: misc.Effect("Holy Shield", "oratath_holy_shield", 3, {"bpd": 180}, {}, retaliation=misc.Retaliation(self.damage[0], self.damage[1], 0.75, lambda multiplier: multiplier/2))
@@ -62,6 +63,17 @@ class Oratath(classes.Enemy):
                 to_pop.append(skill)
         for skill in to_pop:
             self.active_cooldowns.pop(skill)
+
+    def update_rollback_data(self):
+        super().update_rollback_data()
+
+        self.rollback_active_cooldowns.append(self.active_cooldowns.copy())
+
+    def rollback(self):
+        super().rollback()
+
+        self.active_cooldowns = self.rollback_active_cooldowns[-2]
+        self.rollback_active_cooldowns.pop()
 
     def next(self):
         if super().next() == constants.ENEMY_STUNNED_STR:
