@@ -58,8 +58,18 @@ class DoT:
         return random.randint(self.dmg_min, self.dmg_max)
 
 
+class Regeneration:
+    def __init__(self, get_health, use_health_resistance):
+        """
+        :param get_health: A function that gets the entity, whether the attack was a crit, whether the attack was a glance, and the damage dealt as an input and returns the amount of health to regenerate
+        :param use_health_resistance: Whether to use the entity's health resistance when regenerating
+        """
+        self.get_health = get_health
+        self.use_health_resistance = use_health_resistance
+
+
 class Effect:
-    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None):
+    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None, regeneration=None):
         self.name = name
         self.identifier = identifier
         self.duration = duration
@@ -68,6 +78,7 @@ class Effect:
         self.death_proof = death_proof
         self.refreshable = refreshable
         self.retaliation = retaliation
+        self.regeneration = regeneration
         self.dot = dot
         self.stun = stun
 

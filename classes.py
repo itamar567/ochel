@@ -499,6 +499,15 @@ Effects:"""
                     else:
                         damage = self.hp // 2
             self.hp -= damage
+            if self.hp > 0:
+                for effect in self.effects:
+                    if effect.regeneration is not None and not dot:
+                        regeneration_amount = effect.regeneration.get_health(entity, crit, glancing, damage)
+                        if effect.regeneration.use_health_resistance:
+                            self.attacked(regeneration_amount, "health", entity=self)
+                        else:
+                            self.hp = utilities.clamp(self.hp + round(regeneration_amount), 0, self.max_hp)
+                            self.match.update_main_log(f"{self.name} recovers {regeneration_amount} HP.", f"{self.tag_prefix}_heal")
             if dot:
                 self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.", f"{self.tag_prefix}_dot")
             else:
