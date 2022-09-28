@@ -72,7 +72,7 @@ class Oratath(classes.Enemy):
     def rollback(self):
         super().rollback()
 
-        self.active_cooldowns = self.rollback_active_cooldowns[-2]
+        self.active_cooldowns = self.rollback_active_cooldowns[-2].copy()
         self.rollback_active_cooldowns.pop()
 
     def next(self):
