@@ -139,37 +139,25 @@ class Chaosweaver(classes.Player):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
 
     def skill_aggression(self):
-        hit = False
-        for i in range(8):
-            if self.attack(self.match.targeted_enemy, damage_multiplier=0.28125) == constants.ATTACK_CODE_SUCCESS:
-                hit = True
-        if hit:
-            dot_dpt = utilities.dot_dpt(self, 0.5)
-            if self.empowered:
-                self.match.targeted_enemy.add_effect(self.available_effects.empowered_mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
-            else:
-                self.match.targeted_enemy.add_effect(self.available_effects.mothbitten(self.element, dot_dpt[0], dot_dpt[1]))
+        dot_dpt = utilities.dot_dpt(self, 0.5)
         if self.empowered:
             self.use_soulthread()
+            effect = self.available_effects.empowered_mothbitten(self.element, dot_dpt[0], dot_dpt[1])
+        else:
+            effect = self.available_effects.mothbitten(self.element, dot_dpt[0], dot_dpt[1])
+        for i in range(8):
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.28125, inflicts=[effect])
 
     def skill_soul_shred(self):
-        even_hit = False
-        odd_hit = False
-        for i in range(1, 8):
-            if self.attack(self.match.targeted_enemy, damage_multiplier=0.2857) == constants.ATTACK_CODE_SUCCESS:
-                if i % 2 == 0:
-                    even_hit = True
-                else:
-                    odd_hit = True
+        odd_effect = self.available_effects.shredded_soul()
         if self.empowered:
             self.use_soulthread()
-            if even_hit:
-                self.match.targeted_enemy.add_effect(self.available_effects.soul_damage())
-            if odd_hit:
-                self.match.targeted_enemy.add_effect(self.available_effects.shredded_soul())
-            return
-        if even_hit or odd_hit:
-            self.match.targeted_enemy.add_effect(self.available_effects.shredded_soul())
+            even_effect = self.available_effects.soul_damage()
+        else:
+            even_effect = odd_effect
+        for i in range(1, 8):
+            current_effect = even_effect if i%2 == 0 else odd_effect
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.2857, inflicts=[current_effect])
 
     def skill_soul_assault(self):
         self.add_soulthread()
@@ -195,17 +183,16 @@ class Chaosweaver(classes.Player):
 
     def skill_soul_rip(self):
         for entity in self.match.enemies:
-            if self.attack(entity) == constants.ATTACK_CODE_SUCCESS:
-                entity.add_effect(self.available_effects.rippen_soul())
+            self.attack(entity, inflicts=[self.available_effects.rippen_soul()])
 
     def skill_vengeance(self):
+        if self.empowered:
+            effect = self.available_effects.empowered_overwhelmed()
+            self.use_soulthread()
+        else:
+            effect = self.available_effects.overwhelmed()
         for i in range(19):
-            if self.attack(self.match.targeted_enemy, damage_multiplier=0.092) == constants.ATTACK_CODE_SUCCESS:
-                if self.empowered:
-                    self.match.targeted_enemy.add_effect(self.available_effects.empowered_overwhelmed())
-                    self.use_soulthread()
-                else:
-                    self.match.targeted_enemy.add_effect(self.available_effects.overwhelmed())
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.092, inflicts=[effect])
 
     def skill_rebuke(self):
         damage_multiplier = 1.667
@@ -222,10 +209,8 @@ class Chaosweaver(classes.Player):
             self.attack(self.match.targeted_enemy, damage_multiplier=damage_multiplier)
 
     def skill_obliterate(self):
-        if self.attack(self.match.targeted_enemy, damage_multiplier=2) == constants.ATTACK_CODE_UNSUCCESSFUL:
-            return
         if (self.match.targeted_enemy.max_hp <= 0.5 * self.max_hp
-                and self.match.targeted_enemy.hp <= 0.7 * self.match.targeted_enemy.max_hp) \
+            and self.match.targeted_enemy.hp <= 0.7 * self.match.targeted_enemy.max_hp) \
                 or (0.5 * self.max_hp <= self.match.targeted_enemy.max_hp <= self.max_hp
                     and self.match.targeted_enemy.hp <= 0.5 * self.match.targeted_enemy.max_hp) \
                 or (self.max_hp <= self.match.targeted_enemy.max_hp <= 2 * self.max_hp
@@ -236,11 +221,11 @@ class Chaosweaver(classes.Player):
                     and self.match.targeted_enemy.hp <= 0.1 * self.match.targeted_enemy.max_hp) \
                 or (self.match.targeted_enemy.max_hp >= 5 * self.max_hp
                     and self.match.targeted_enemy.hp <= 0.05 * self.match.targeted_enemy.max_hp):
-            self.match.targeted_enemy.add_effect(
-                self.available_effects.soul_annihilation(self.match.targeted_enemy.hp * self.dot_multiplier))
+            effect = self.available_effects.soul_annihilation(self.match.targeted_enemy.hp * self.dot_multiplier)
         else:
             dot_dpt = utilities.dot_dpt(self, 3)
-            self.match.targeted_enemy.add_effect(self.available_effects.soul_torn(dot_dpt[0], dot_dpt[1]))
+            effect = self.available_effects.soul_torn(dot_dpt[0], dot_dpt[1])
+        self.attack(self.match.targeted_enemy, damage_multiplier=2, inflicts=[effect])
 
     def skill_untangle(self):
         self.add_soulthread()
@@ -366,24 +351,21 @@ class Technomancer(classes.Player):
         assert skill in self.mana_cost.keys()
         return self.mana_cost[skill] <= self.old_mp
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
-        return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()/100),
-                              damage_additive=damage_additive, multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage)
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
+        return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()/100), damage_additive=damage_additive,
+                              multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage, inflicts=inflicts)
 
     def skill_vent_heat(self):
-        if self.attack(self.match.targeted_enemy,
-                       damage_multiplier=0.1 * self.heat_level) == constants.ATTACK_CODE_SUCCESS:
-            self.match.targeted_enemy.add_effect(self.available_effects.vent_heat(self.heat_level))
+        self.attack(self.match.targeted_enemy, damage_multiplier=0.1 * self.heat_level, inflicts=[self.available_effects.vent_heat(self.heat_level)])
         self.heat_level = -1
 
     def skill_tog_drone_tracking(self):
-        self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
         self.add_effect(self.available_effects.tog_drone())
+        self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
 
     def skill_sonic_boom_blaster(self):
         self.match.targeted_enemy.add_effect(self.available_effects.booming_noise())
-        if self.attack(self.match.targeted_enemy) == constants.ATTACK_CODE_SUCCESS:
-            self.match.targeted_enemy.add_effect(self.available_effects.sonic_blasted())
+        self.attack(self.match.targeted_enemy, inflicts=[self.available_effects.sonic_blasted()])
 
     def skill_magnetic_resonance_protocol(self):
         self.attacked(0.2 * self.max_hp, "health")
@@ -406,21 +388,15 @@ class Technomancer(classes.Player):
 
     def skill_event_horizon(self):
         for i in range(2):
-            if self.attack(self.match.targeted_enemy, damage_multiplier=0.55) == constants.ATTACK_CODE_SUCCESS:
-                self.match.targeted_enemy.add_effect(self.available_effects.crushed())
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.55, inflicts=[self.available_effects.crushed()])
 
     def skill_drillbit(self):
-        hit = False
         for i in range(3):
-            if self.attack(self.match.targeted_enemy, damage_multiplier=0.25) == constants.ATTACK_CODE_SUCCESS:
-                hit = True
-        if hit:
-            self.match.targeted_enemy.add_effect(self.available_effects.stunned())
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.25, inflicts=[self.available_effects.stunned()])
 
     def skill_enhanced_metallic_aging(self):
-        if self.attack(self.match.targeted_enemy) == constants.ATTACK_CODE_SUCCESS:
-            dpt = utilities.dot_dpt(self, 1)
-            self.match.targeted_enemy.add_effect(self.available_effects.rusting(dpt[0], dpt[1]))
+        dpt = utilities.dot_dpt(self, 1)
+        self.attack(self.match.targeted_enemy, inflicts=[self.available_effects.rusting(dpt[0], dpt[1])])
 
     def skill_mana_burst_grenades(self):
         for i in range(3):

@@ -335,9 +335,10 @@ Effects:"""
             result += f"{effect_duration} turn(s) left."
         return result
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
         """
         Attacks an entity.
+        :param inflicts: List of effects to inflict on the target
         :param can_miss: Whether the attack can miss.
         :param element: The element used in the attack, will use self.element if not specified.
         :param entity: The entity to attack.
@@ -408,6 +409,12 @@ Effects:"""
                 damage_dealt = entity.attacked(damage, self.element, self, crit=True)
             else:
                 damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self)
+
+            for effect in inflicts:
+                if effect.stun and not utilities.stun_chance(entity):
+                    continue
+                entity.add_effect(effect)
+
             self.on_hit_special(self.match, entity, damage)
             self.element = old_element
             if return_damage:
@@ -418,10 +425,11 @@ Effects:"""
             return constants.ATTACK_CODE_UNSUCCESSFUL, damage_dealt
         return constants.ATTACK_CODE_UNSUCCESSFUL
 
-    def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False):
+    def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
         """
         Attacks an entity with bonuses.
 
+        :param inflicts: List of effects to inflict on the target
         :param bonuses: The bonuses to the attack
         :param can_miss: Whether the attack can miss.
         :param element: The element used in the attack, will use self.element if not specified.
@@ -436,7 +444,7 @@ Effects:"""
         for bonus in bonuses.keys():
             utilities.add_value(self.bonuses, bonus, bonuses[bonus])
         self.attack(entity, damage_multiplier=damage_multiplier, damage_additive=damage_additive,
-                    multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage)
+                    multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage, inflicts=inflicts)
         for bonus in bonuses.keys():
             utilities.add_value(self.bonuses, bonus, -bonuses[bonus])
             if self.bonuses[bonus] == 0:
@@ -499,15 +507,6 @@ Effects:"""
                     else:
                         damage = self.hp // 2
             self.hp -= damage
-            if self.hp > 0:
-                for effect in self.effects:
-                    if effect.regeneration is not None and not dot:
-                        regeneration_amount = effect.regeneration.get_health(entity, crit, glancing, damage)
-                        if effect.regeneration.use_health_resistance:
-                            self.attacked(regeneration_amount, "health", entity=self)
-                        else:
-                            self.hp = utilities.clamp(self.hp + round(regeneration_amount), 0, self.max_hp)
-                            self.match.update_main_log(f"{self.name} recovers {regeneration_amount} HP.", f"{self.tag_prefix}_heal")
             if dot:
                 self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.", f"{self.tag_prefix}_dot")
             else:

@@ -95,12 +95,8 @@ class Oratath(classes.Enemy):
 
     def skill_3(self):
         self.match.update_main_log("Blinded by Oratath's light!", "e_comment")
-        hit = False
         for i in range(4):
-            if self.attack(self.match.player) == constants.ATTACK_CODE_SUCCESS:
-                hit = True
-        if hit:
-            self.match.player.add_effect(self.available_effects.blind())
+            self.attack(self.match.player, inflicts=[self.available_effects.blind()])
 
     def skill_4(self):
         self.match.update_main_log("Oratath regenerates!", "e_comment")
