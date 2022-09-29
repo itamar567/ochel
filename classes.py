@@ -525,7 +525,7 @@ Effects:"""
 
             if self.hp > 0:
                 for effect in self.effects:
-                    if effect.regeneration is not None and not dot:
+                    if effect.regeneration is not None and not dot and glancing:
                         regeneration_amount = effect.regeneration.get_health(self, crit, glancing, damage)
                         if effect.regeneration.use_health_resistance:
                             self.attacked(regeneration_amount, "health", entity=self)
