@@ -492,19 +492,22 @@ Effects:"""
             for effect in inflicts:
                 self.add_effect(effect)
         else:
+            damage = round(damage)
+
             for effect in self.effects:
                 if effect.retaliation is not None and entity is not self.match.pet and not dot:
                     dmg = effect.retaliation.get_damage()
-                    entity.hp = utilities.clamp(entity.hp - dmg, 0, entity.max_hp)
+                    entity.hp = utilities.clamp(entity.hp - dmg, 1, entity.max_hp)
                     self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
-
-            damage = round(damage)
-            for effect in self.effects:
                 if effect.damage_negation is not None:
                     if dot:
                         damage *= effect.damage_negation.dot_multiplier
                     else:
                         damage *= effect.damage_negation.direct_multiplier
+                if effect.damage_reflection is not None and entity is not self.match.pet:
+                    dmg = effect.damage_reflection.get_damage(damage, not dot)
+                    entity.hp = utilities.clamp(entity.hp - dmg, 1, entity.max_hp)
+                    self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
             if self.death_proof and not dot:
                 if damage >= self.hp:
                     if self.hp == 1:
@@ -635,7 +638,7 @@ Effects:"""
         """
 
         self.attacked(random.randint(math.floor(effect.dot.dmg_min), math.floor(effect.dot.dmg_max)),
-                      effect.dot.element, effect, dot=True)
+                      effect.dot.element, effect.dot.entity, dot=True)
 
     def next(self):
         """

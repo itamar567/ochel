@@ -49,10 +49,17 @@ class Retaliation:
 
 
 class DoT:
-    def __init__(self, dmg_min, dmg_max, element):
+    def __init__(self, dmg_min, dmg_max, element, entity):
+        """
+        :param dmg_min: The minimum damage the DoT can do
+        :param dmg_max: The maximum damage the DoT can do
+        :param element: The element the DoT uses
+        :param entity: The entity that inflicted the DoT
+        """
         self.dmg_min = dmg_min
         self.dmg_max = dmg_max
         self.element = element
+        self.entity = entity
 
     def get_damage(self):
         return random.randint(self.dmg_min, self.dmg_max)
@@ -78,8 +85,30 @@ class DamageNegation:
         self.dot_multiplier = dot_multiplier
 
 
+class DamageReflection:
+    def __init__(self, get_damage):
+        """
+        :param get_damage: A function that gets the damage, whether the attack was a direct attack, the number of times
+        a direct attack has been reflected, the number of times a DoT has been reflected and the number of times any
+        attack was reflected as an input, and returns the damage to return.
+        """
+        self._get_damage_function = get_damage
+        self.direct_hit_reflect_count = 0
+        self.dot_reflect_count = 0
+        self.reflect_count = 0
+
+    def get_damage(self, damage, direct):
+        if direct:
+            self.direct_hit_reflect_count += 1
+        else:
+            self.dot_reflect_count += 1
+        self.reflect_count += 1
+        return self._get_damage_function(damage, direct, self.direct_hit_reflect_count, self.dot_reflect_count, self.reflect_count)
+
+
 class Effect:
-    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None, regeneration=None, damage_negation=None):
+    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False,
+                 refreshable=False, retaliation=None, regeneration=None, damage_negation=None, damage_reflection=None):
         self.name = name
         self.identifier = identifier
         self.duration = duration
@@ -90,6 +119,7 @@ class Effect:
         self.retaliation = retaliation
         self.regeneration = regeneration
         self.damage_negation = damage_negation
+        self.damage_reflection = damage_reflection
         self.dot = dot
         self.stun = stun
 

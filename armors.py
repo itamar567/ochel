@@ -56,15 +56,15 @@ class Chaosweaver(classes.Player):
         self.available_effects.empowered_soul_aegis = lambda: misc.Effect("Empowered Soul Aegis", "chaosweaver_soul_aegis", 3, {}, {"immobility": 100}, death_proof=True)
         self.available_effects.soul_aegis = lambda: misc.Effect("Soul Aegis", "chaosweaver_soul_aegis", 2, {}, {}, death_proof=True)
         self.available_effects.soul_hunter = lambda: misc.Effect("Soul Hunter", "chaosweaver_soul_hunter", 3, {"crit": 50}, {})
-        self.available_effects.mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 4, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem))
-        self.available_effects.empowered_mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 10, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem))
+        self.available_effects.mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 4, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem, self))
+        self.available_effects.empowered_mothbitten = lambda elem, dpt_min, dpt_max: misc.Effect("Mothbitten", "chaosweaver_mothbitten", 10, {}, {}, dot=misc.DoT(dpt_min, dpt_max, elem, self))
         self.available_effects.shredded_soul = lambda: misc.Effect("Shredded Soul", "chaosweaver_shredded_soul", 1, {}, {}, stun=True)
         self.available_effects.soul_damage = lambda: misc.Effect("Soul Damage", "chaosweaver_soul_damage", 2, {"bonus": -75}, {})
         self.available_effects.rippen_soul = lambda: misc.Effect("Rippen Soul", "chaosweaver_ripped_soul", 1, {}, {}, stun=True)
         self.available_effects.empowered_overwhelmed = lambda: misc.Effect("Overwhelmed", "chaosweaver_overwhelmed", 4, {}, {"all": -20, "health": 50})
         self.available_effects.overwhelmed = lambda: misc.Effect("Overwhelmed", "chaosweaver_overwhelmed", 4, {}, {"all": -20, "health": 20})
-        self.available_effects.soul_annihilation = lambda damage: misc.Effect("Soul Annihilation", "chaosweaver_soul_annihilation", 1, {}, {}, dot=misc.DoT(damage, damage, "nan"))
-        self.available_effects.soul_torn = lambda dpt_min, dpt_max: misc.Effect("Soul Torn", "chaosweaver_soul_torn", 1, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "nan"))
+        self.available_effects.soul_annihilation = lambda damage: misc.Effect("Soul Annihilation", "chaosweaver_soul_annihilation", 1, {}, {}, dot=misc.DoT(damage, damage, "nan", self))
+        self.available_effects.soul_torn = lambda dpt_min, dpt_max: misc.Effect("Soul Torn", "chaosweaver_soul_torn", 1, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "nan", self))
 
     def use_skill_button_onclick(self, event, attack_name=None):
         if event.widget["state"] == "disabled":
@@ -279,11 +279,11 @@ class Technomancer(classes.Player):
         self.available_effects.tog_drone = lambda: misc.Effect("Tog-Drone", "technomancer_tog_drone", 6, {"boost": 50, "bonus": 100, "crit": 50}, {})
         self.available_effects.booming_noise = lambda: misc.Effect("Blooming Noise", "technomancer_blooming_noise", 1, {}, {"immobility": -50})
         self.available_effects.sonic_blasted = lambda: misc.Effect("Sonic Blasted", "technomancer_sonic_blasted", 1, {}, {}, stun=True)
-        self.available_effects.magnetic_personality = lambda hot_value: misc.Effect("Magnetic Personality", "technomancer_magnetic_personality", 3, {}, {}, dot=misc.DoT(hot_value, hot_value, "health"))
+        self.available_effects.magnetic_personality = lambda hot_value: misc.Effect("Magnetic Personality", "technomancer_magnetic_personality", 3, {}, {}, dot=misc.DoT(hot_value, hot_value, "health", self))
         self.available_effects.barrier = lambda: misc.Effect("Barrier", "technomancer_barrier", 2, {"mpm": 200}, {})
         self.available_effects.crushed = lambda: misc.Effect("Crushed", "technomancer_crushed", 4, {}, {"all": -50, "health": 50})
         self.available_effects.stunned = lambda: misc.Effect("Stunned", "technomancer_stunned", 2, {}, {}, stun=True)
-        self.available_effects.rusting = lambda dpt_min, dpt_max: misc.Effect("Rusting", "technomancer_rusting", 6, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "metal"))
+        self.available_effects.rusting = lambda dpt_min, dpt_max: misc.Effect("Rusting", "technomancer_rusting", 6, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "metal", self))
 
     def rollback(self):
         super().rollback()
