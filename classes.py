@@ -541,7 +541,11 @@ Effects:"""
                         else:
                             self.hp = utilities.clamp(self.hp + round(regeneration_amount), 0, self.max_hp)
                             self.match.update_main_log(f"{self.name} recovers {regeneration_amount} HP.", f"{self.tag_prefix}_heal")
+            self.on_hit_reaction()
         return damage
+
+    def on_hit_reaction(self):
+        pass
 
     def remove_effect(self, effect):
         """
