@@ -401,17 +401,14 @@ Effects:"""
 
         if glancing:
             if crit:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True, inflicts=inflicts)
             else:
-                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True)
+                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True, inflicts=inflicts)
         else:
             if crit:
-                damage_dealt = entity.attacked(damage, self.element, self, crit=True)
+                damage_dealt = entity.attacked(damage, self.element, self, crit=True, inflicts=inflicts)
             else:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self)
-
-            for effect in inflicts:
-                entity.add_effect(effect)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, inflicts=inflicts)
 
             self.on_hit_special(self.match, entity, damage)
             self.element = old_element
@@ -448,7 +445,7 @@ Effects:"""
             if self.bonuses[bonus] == 0:
                 self.bonuses.pop(bonus)
 
-    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False):
+    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[]):
         """
         Receive damage from an attack
 
@@ -458,6 +455,7 @@ Effects:"""
         :param dot: Whether the received attack is from a DoT effect
         :param glancing: Whether the received attack was a glancing hit/crit
         :param crit: Whether the received attack was a crit
+        :param inflicts: List of effects to inflict
         :return: Damage taken
         """
 
@@ -490,6 +488,9 @@ Effects:"""
                 self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
             else:
                 self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
+
+            for effect in inflicts:
+                self.add_effect(effect)
         else:
             for effect in self.effects:
                 if effect.retaliation is not None and entity is not self.match.pet and not dot:
@@ -518,6 +519,19 @@ Effects:"""
                         self.match.update_main_log(f"{entity.name} critically hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_crit")
                     else:
                         self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked")
+
+            for effect in inflicts:
+                self.add_effect(effect)
+
+            if self.hp > 0:
+                for effect in self.effects:
+                    if effect.regeneration is not None and not dot:
+                        regeneration_amount = effect.regeneration.get_health(self, crit, glancing, damage)
+                        if effect.regeneration.use_health_resistance:
+                            self.attacked(regeneration_amount, "health", entity=self)
+                        else:
+                            self.hp = utilities.clamp(self.hp + round(regeneration_amount), 0, self.max_hp)
+                            self.match.update_main_log(f"{self.name} recovers {regeneration_amount} HP.", f"{self.tag_prefix}_heal")
         return damage
 
     def remove_effect(self, effect):
@@ -1016,7 +1030,7 @@ class Enemy(Entity):
         if self.stunned:
             return constants.ENEMY_STUNNED_STR
 
-    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False):
+    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[]):
         if element == "health":
             cap = self.resist_cap
             resist = min(self.resists.get("all", 0) + self.resists.get(element, 0), cap)
@@ -1031,4 +1045,4 @@ class Enemy(Entity):
                 self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
             return damage
         else:
-            return super().attacked(damage, element, entity, dot, glancing, crit)
+            return super().attacked(damage, element, entity, dot, glancing, crit, inflicts=inflicts)
