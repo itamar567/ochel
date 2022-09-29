@@ -68,8 +68,18 @@ class Regeneration:
         self.use_health_resistance = use_health_resistance
 
 
+class DamageNegation:
+    def __init__(self, direct_multiplier, dot_multiplier):
+        """
+        :param direct: Multiplier for direct damage
+        :param dot: Multiplier for DoT
+        """
+        self.direct_multiplier = direct_multiplier
+        self.dot_multiplier = dot_multiplier
+
+
 class Effect:
-    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None, regeneration=None):
+    def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False, refreshable=False, retaliation=None, regeneration=None, damage_negation=None):
         self.name = name
         self.identifier = identifier
         self.duration = duration
@@ -79,6 +89,7 @@ class Effect:
         self.refreshable = refreshable
         self.retaliation = retaliation
         self.regeneration = regeneration
+        self.damage_negation = damage_negation
         self.dot = dot
         self.stun = stun
 

@@ -499,6 +499,12 @@ Effects:"""
                     self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
 
             damage = round(damage)
+            for effect in self.effects:
+                if effect.damage_negation is not None:
+                    if dot:
+                        damage *= effect.damage_negation.dot_multiplier
+                    else:
+                        damage *= effect.damage_negation.direct_multiplier
             if self.death_proof and not dot:
                 if damage >= self.hp:
                     if self.hp == 1:
