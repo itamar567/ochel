@@ -71,8 +71,8 @@ class Regeneration:
 class DamageNegation:
     def __init__(self, direct_multiplier, dot_multiplier):
         """
-        :param direct: Multiplier for direct damage
-        :param dot: Multiplier for DoT
+        :param direct_multiplier: Multiplier for direct damage
+        :param dot_multiplier: Multiplier for DoT
         """
         self.direct_multiplier = direct_multiplier
         self.dot_multiplier = dot_multiplier
