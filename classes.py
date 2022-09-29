@@ -411,8 +411,6 @@ Effects:"""
                 damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self)
 
             for effect in inflicts:
-                if effect.stun and not utilities.stun_chance(entity):
-                    continue
                 entity.add_effect(effect)
 
             self.on_hit_special(self.match, entity, damage)
@@ -572,18 +570,15 @@ Effects:"""
         :param effect: The effect to add.
         """
 
-        if effect.stun is True:
-            if utilities.stun_chance(self):
-                self.stunned = True
-            else:
-                return
-
         already_applied = False
         for eff in self.effects:
             if effect == eff:
                 already_applied = True
                 self.remove_effect(effect)
                 break
+
+        if effect.stun is True:
+            self.stunned = True
 
         fade_turn = self.match.current_turn + effect.duration
         if already_applied and effect.refreshable:

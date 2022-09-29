@@ -155,9 +155,12 @@ class Chaosweaver(classes.Player):
             even_effect = self.available_effects.soul_damage()
         else:
             even_effect = odd_effect
+        stun = utilities.stun_chance(self.match.targeted_enemy)
         for i in range(1, 8):
-            current_effect = even_effect if i%2 == 0 else odd_effect
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.2857, inflicts=[current_effect])
+            current_effect = [even_effect if i % 2 == 0 else odd_effect]
+            if current_effect[0] == self.available_effects.shredded_soul() and not stun:
+                current_effect = []
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.2857, inflicts=current_effect)
 
     def skill_soul_assault(self):
         self.add_soulthread()
@@ -279,7 +282,7 @@ class Technomancer(classes.Player):
         self.available_effects.magnetic_personality = lambda hot_value: misc.Effect("Magnetic Personality", "technomancer_magnetic_personality", 3, {}, {}, dot=misc.DoT(hot_value, hot_value, "health"))
         self.available_effects.barrier = lambda: misc.Effect("Barrier", "technomancer_barrier", 2, {"mpm": 200}, {})
         self.available_effects.crushed = lambda: misc.Effect("Crushed", "technomancer_crushed", 4, {}, {"all": -50, "health": 50})
-        self.available_effects.stunned = lambda: misc.Effect("Stunned", "technomancer_stunned", 2, {}, {})
+        self.available_effects.stunned = lambda: misc.Effect("Stunned", "technomancer_stunned", 2, {}, {}, stun=True)
         self.available_effects.rusting = lambda dpt_min, dpt_max: misc.Effect("Rusting", "technomancer_rusting", 6, {}, {}, dot=misc.DoT(dpt_min, dpt_max, "metal"))
 
     def rollback(self):
@@ -365,7 +368,9 @@ class Technomancer(classes.Player):
 
     def skill_sonic_boom_blaster(self):
         self.match.targeted_enemy.add_effect(self.available_effects.booming_noise())
-        self.attack(self.match.targeted_enemy, inflicts=[self.available_effects.sonic_blasted()])
+        stun = utilities.stun_chance(self.match.targeted_enemy)
+        inflicts = [self.available_effects.sonic_blasted()] if stun else []
+        self.attack(self.match.targeted_enemy, inflicts=inflicts)
 
     def skill_magnetic_resonance_protocol(self):
         self.attacked(0.2 * self.max_hp, "health")
@@ -391,8 +396,11 @@ class Technomancer(classes.Player):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.55, inflicts=[self.available_effects.crushed()])
 
     def skill_drillbit(self):
+        stun = utilities.stun_chance(self.match.targeted_enemy)
+        inflicts = [self.available_effects.stunned()] if stun else []
+        print(inflicts)
         for i in range(3):
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.25, inflicts=[self.available_effects.stunned()])
+            self.attack(self.match.targeted_enemy, damage_multiplier=0.25, inflicts=inflicts)
 
     def skill_enhanced_metallic_aging(self):
         dpt = utilities.dot_dpt(self, 1)
