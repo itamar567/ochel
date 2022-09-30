@@ -579,6 +579,7 @@ class Match:
         self.disable_build_buttons()
         if len(self.pet.skills.keys()) > len(["Attack", "Skip"]):
             self.softclear_window()
+            self.update_pet_skill_buttons()
             self.show_window_pet()
         else:
             self.pet.skills[" "][1]()  # use attack skill
@@ -667,10 +668,6 @@ class Match:
         self.update_pet_cooldowns(reduce_cooldowns=False)
         self.update_player_skill_buttons()
         self.update_pet_skill_buttons()
-        for skill in self.pet.skills.keys():
-            if skill not in self.pet.active_cooldowns:
-                self.pet_buttons[skill][0]["state"] = "normal"
-                self.pet_buttons[skill][0]["text"] = self.pet_buttons[skill][0]["text"].split(",")[0]
         self.update_detail_windows()
         if self.current_turn == 1:
             self.buttons["Back"][0]["state"] = "disabled"
