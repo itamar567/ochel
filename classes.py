@@ -570,8 +570,8 @@ Effects:"""
             utilities.add_value(self.resists, elem, -effect.resists[elem])
         if effect.death_proof:
             death_proof = False
-            for effect in self.effects:
-                if effect.death_proof:
+            for eff in self.effects:
+                if eff.death_proof:
                     death_proof = True
                     break
             self.death_proof = death_proof
