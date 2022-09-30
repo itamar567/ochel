@@ -1030,7 +1030,7 @@ class Player(Entity):
 
 class Enemy(Entity):
     def __init__(self, name, stats, level=constants.MAX_LEVEL, race="???"):
-        super().__init__(name, stats, level=level, race="???")
+        super().__init__(name, stats, level=level, race=race)
 
         self.tag_prefix = "e"  # Used for coloring the main log, 'e' stands for enemy
 
