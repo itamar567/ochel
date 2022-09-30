@@ -459,6 +459,9 @@ Effects:"""
         :return: Damage taken
         """
 
+        if self.hp == 0:
+            return
+
         if element == "mana":
             if glancing:
                 return 0
@@ -514,7 +517,7 @@ Effects:"""
                         damage = 0
                     else:
                         damage = self.hp // 2
-            self.hp -= damage
+            self.hp = utilities.clamp(self.hp - damage, 0, self.max_hp)
             if dot:
                 self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.", f"{self.tag_prefix}_dot")
             else:

@@ -19,9 +19,11 @@ class Match:
 
         # Setup enemies and player
         self.window = tkinter.Tk()
+        self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
         self.player = self.choose_armor()
         self.enemies = self.choose_enemies()
-        self.targeted_enemy = self.enemies[0]
+        self.enemies_alive = self.enemies.copy()
+        self.targeted_enemy = self.enemies_alive[0]
         self.entities = self.enemies.copy()
         self.entities.append(self.player)
         for entity in self.entities:
@@ -129,11 +131,14 @@ class Match:
     def switch_targeted_enemy_onclick(self, event):
         if event.widget["state"] == "disabled":
             return
-        enemy_index = self.name_to_enemies_index[event.widget["text"]]
+        self.switch_targeted_enemy(event.widget)
+
+    def switch_targeted_enemy(self, button, update_log=True):
+        enemy_index = self.name_to_enemies_index[button["text"]]
         self.targeted_enemy = self.enemies[enemy_index]
-        for button in self.choose_targeted_enemy_buttons:
-            button["state"] = "normal"
-        event.widget["state"] = "disabled"
+        for btn in self.choose_targeted_enemy_buttons:
+            btn["state"] = "normal"
+        button["state"] = "disabled"
         self.update_rotation_log(f"Target {self.enemies[enemy_index].name}", double_turn=True)
 
     def setup_choose_targeted_enemy_window(self):
@@ -514,6 +519,11 @@ class Match:
         Updates the player skill buttons' state based on cooldown/potion count.
         """
 
+        if self.player_disabled_skills:
+            for skill in self.player.skills:
+                self.buttons[skill][0]["state"] = "disabled"
+            return
+
         for skill in self.player.mana_cost.keys():
             if not self.player.check_mp_for_skill(skill):
                 self.buttons[skill][0]["state"] = "disabled"
@@ -559,6 +569,12 @@ class Match:
         if self.pet.waking_up:
             self.pet.waking_up = False
             self.next()
+
+        # Check if enemies died on the player turn
+        for enemy in self.enemies_alive.copy():
+            if enemy.hp == 0:
+                self.on_death(enemy)
+
         self.disable_food_buttons()
         self.disable_build_buttons()
         if len(self.pet.skills.keys()) > len(["Attack", "Skip"]):
@@ -573,10 +589,16 @@ class Match:
         Do enemies attack and start a new turn
         """
 
-        for enemy in self.enemies:
+        for enemy in self.enemies_alive.copy():
+            if enemy.hp == 0:
+                self.on_death(enemy)
+                continue
             # Handles DoTs, enemy-specific mechanics and attacks
             if enemy.next() == constants.ENEMY_STUNNED_STR:
                 self.update_main_log(f"{enemy.name} is immobilized", "e_comment")
+
+        if self.player.hp == 0:
+            self.on_death(self.player)
 
         # Add newline at the start of each turn
         self.update_main_log_without_turn_prefix("\n")
@@ -597,6 +619,22 @@ class Match:
         for entity in self.entities:
             entity.update_rollback_data()
         self.update_detail_windows()
+
+    def end_match(self):
+        pass
+
+    def on_death(self, entity):
+        if entity == self.player:
+            self.player_disabled_skills = True
+            self.update_player_skill_buttons()
+            return
+
+        self.enemies_alive.remove(entity)
+        if len(self.enemies_alive) == 0:
+            self.end_match()
+            return
+        self.switch_targeted_enemy(self.choose_targeted_enemy_buttons[self.name_to_enemies_index[self.enemies_alive[0].name]], update_log=False)
+        self.choose_targeted_enemy_buttons[self.name_to_enemies_index[entity.name]]["state"] = "disabled"
 
     def update_match_after_double_turn(self):
         """
@@ -619,6 +657,7 @@ class Match:
 
         if self.buttons["Back"][0]["state"] == "disabled":
             return
+        self.player_disabled_skills = False
         self.current_turn -= 1
         for entity in self.entities:
             entity.rollback()

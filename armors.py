@@ -181,11 +181,11 @@ class Chaosweaver(classes.Player):
             self.attacked((100 + missing_hp_percent)/100 * damage_dealt, "health")
 
     def skill_dominance(self):
-        for entity in self.match.enemies:
+        for entity in self.match.enemies_alive:
             self.attack(entity, damage_multiplier=1.6)
 
     def skill_soul_rip(self):
-        for entity in self.match.enemies:
+        for entity in self.match.enemies_alive:
             self.attack(entity, inflicts=[self.available_effects.rippen_soul()])
 
     def skill_vengeance(self):
@@ -412,7 +412,7 @@ class Technomancer(classes.Player):
                         damage_additive=max(round(self.stats.WIS / 3), 5))
 
     def skill_static_overload_blast(self):
-        for entity in self.match.enemies:
+        for entity in self.match.enemies_alive:
             self.attack_with_bonus({"bonus": 200}, entity, damage_multiplier=random.randint(115, 125) / 100)
 
     def skill_photon_bow(self):
