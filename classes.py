@@ -745,6 +745,9 @@ class Player(Entity):
         self.skill_images = {}
         self.skill_names = {}
 
+        self.on_attack_special = constants.DEFAULT_ON_ATTACK_SPECIAL
+        self.on_attack_special_chance = 0
+
         # Some armors use an extra button (e.g. ChW for soulthreads)
         self.extra_window = None
 
@@ -782,7 +785,10 @@ class Player(Entity):
 
         if slot == constants.SLOT_PET and self.match.pet == item:
             return
-        if slot == constants.SLOT_WEAPON_SPECIAL and self.on_hit_special == item.on_hit_special:
+        if slot == constants.SLOT_WEAPON_SPECIAL \
+                and self.on_hit_special == item.on_hit_special\
+                and self.on_attack_special == item.on_attack_special \
+                and self.on_attack_special_chance == item.on_attack_special_chance:
             return
         if self.gear.get(slot, None) == item:
             return
@@ -795,6 +801,8 @@ class Player(Entity):
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
             self.on_hit_special = item.on_hit_special
+            self.on_attack_special = item.on_attack_special
+            self.on_attack_special_chance = item.on_attack_special_chance
             return
 
         if slot == constants.SLOT_WEAPON:
@@ -915,6 +923,11 @@ class Player(Entity):
         if self.stunned and utilities.chance(constants.PLAYER_STUN_CHANCE):
             self.match.update_main_log(f"{self.name} is not affected by stun.", f"{self.tag_prefix}_comment")
             return constants.PLAYER_STUNNED_STR
+
+    def skill_attack(self):
+        if utilities.chance(self.on_attack_special_chance):
+            self.on_attack_special(self.match)
+            return constants.RETURN_CODE_USED_ON_ATTACK_SPECIAL
 
     def update_rollback_data(self):
         """

@@ -110,6 +110,9 @@ class Chaosweaver(classes.Player):
         self.update_extra_button()
 
     def skill_attack(self):
+        if super().skill_attack() == constants.RETURN_CODE_USED_ON_ATTACK_SPECIAL:
+            return
+
         for i in range(2):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.625)
 
@@ -389,6 +392,9 @@ class Technomancer(classes.Player):
         self.add_effect(self.available_effects.barrier())
 
     def skill_attack(self):
+        if super().skill_attack() == constants.RETURN_CODE_USED_ON_ATTACK_SPECIAL:
+            return
+
         self.attack(self.match.targeted_enemy)
 
     def skill_event_horizon(self):

@@ -12,12 +12,15 @@ class Item:
 
 class Weapon(Item):
     def __init__(self, name, dmg_type, element, min_damage, max_damage, bonuses, resists,
-                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL):
+                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL,
+                 on_attack_special=None, on_attack_special_chance=0):
         super().__init__(name, bonuses, resists)
         self.damage = (min_damage, max_damage)
         self.dmg_type = dmg_type
         self.element = element
         self.on_hit_special = on_hit_special
+        self.on_attack_special = on_attack_special
+        self.on_attack_special_chance = on_attack_special_chance
 
 
 class Food:
