@@ -171,7 +171,7 @@ class Chaosweaver(classes.Player):
         if self.empowered:
             self.use_soulthread()
             for effect in self.effects:
-                if effect.dot_dpt_min is not None:
+                if effect.dot is not None:
                     self.remove_effect(effect)
         for i in range(2):
             old_enemy_hp = self.match.targeted_enemy.hp
