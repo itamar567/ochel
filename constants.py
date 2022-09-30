@@ -40,3 +40,5 @@ PLAYER_STUN_CHANCE = 0.34
 DEFAULT_ON_HIT_SPECIAL = lambda match, entity, damage: damage
 DEFAULT_ON_ATTACK_SPECIAL = lambda: None
 RETURN_CODE_USED_ON_ATTACK_SPECIAL = 5
+
+HP_MP_METER_LENGTH = 200  # The length of the HP and MP meters

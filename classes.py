@@ -303,12 +303,12 @@ class Entity:
         self.resists["health"] -= -(old_stats.WIS // 20) + (self.stats.WIS // 20)
         self.dot_multiplier = (1 + self.stats.DEX / 400)
 
-    def __repr__(self):
-        result = f"""
-Level: {self.level}
-Stats: {self.stats.__repr__()}
-HP: {self.hp}/{self.max_hp} (~{round((self.hp/self.max_hp)*100)}%)
-MP: {self.mp}/{self.max_mp} (~{round((self.mp/self.max_mp)*100)}%)
+    def get_details(self):
+        """
+        :return: Returns the character's details except the HP and MP
+        """
+        result = f"""Level: {self.level}
+Stats: {self.stats}
 Bonuses:"""
         for key in self.bonuses.keys():
             result += f"\n        {key}: {self.bonuses[key]}"

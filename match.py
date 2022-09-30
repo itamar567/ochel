@@ -1,6 +1,7 @@
+import math
 import time
 import tkinter
-import tkinter.scrolledtext
+from tkinter import ttk, scrolledtext
 
 import classes
 import constants
@@ -8,6 +9,41 @@ import match_constants
 import misc
 import pets
 import player_values
+
+
+class DetailWindow:
+    def __init__(self, entity):
+        self.entity = entity
+        self.window = tkinter.Tk()
+        self.window.title(entity.name)
+
+        hp_progress_bar_style = ttk.Style(master=self.window)
+        hp_progress_bar_style.configure("HP.Horizontal.TProgressbar", troughcolor="black", background="red")
+
+        mp_progress_bar_style = ttk.Style(master=self.window)
+        mp_progress_bar_style.configure("MP.Horizontal.TProgressbar", troughcolor="black", background="blue")
+
+        self.hp_progress_bar = ttk.Progressbar(master=self.window, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="HP.Horizontal.TProgressbar")
+        self.hp_progress_bar.grid(row=0, column=0)
+        self.hp_progress_label = tkinter.Label(master=self.window, foreground="red")
+        self.hp_progress_label.grid(row=0, column=1)
+
+        self.mp_progress_bar = ttk.Progressbar(master=self.window, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="MP.Horizontal.TProgressbar")
+        self.mp_progress_bar.grid(row=1)
+        self.mp_progress_label = tkinter.Label(master=self.window, foreground="blue")
+        self.mp_progress_label.grid(row=1, column=1)
+
+        self.details_label = tkinter.Label(master=self.window, justify="left")
+        self.details_label.grid(row=2)
+
+        self.update()
+
+    def update(self):
+        self.hp_progress_bar["value"] = (self.entity.hp / self.entity.max_hp)
+        self.hp_progress_label["text"] = f"{self.entity.hp} / {self.entity.max_hp} (~{math.ceil((self.entity.hp / self.entity.max_hp) * 100)}%)"
+        self.mp_progress_bar["value"] = (self.entity.mp / self.entity.max_mp)
+        self.mp_progress_label["text"] = f"{self.entity.mp} / {self.entity.max_mp} (~{math.ceil((self.entity.mp / self.entity.max_mp) * 100)}%)"
+        self.details_label["text"] = self.entity.get_details()
 
 
 class Match:
@@ -109,10 +145,8 @@ class Match:
 
         # Setup entities windows
         self.entities_windows = []
-        for i in range(len(self.entities)):
-            self.entities_windows.append(tkinter.Tk())
-        self.entities_details = []
-        self.setup_detail_windows()
+        for entity in self.entities:
+            self.entities_windows.append(DetailWindow(entity))
         self.update_player_skill_buttons()
 
         while True:
@@ -500,25 +534,13 @@ class Match:
         for button in self.pet_buttons.values():
             button[0].grid(**button[1])
 
-    def setup_detail_windows(self):
-        """
-        Setups the detail window for all entities.
-        """
-
-        for i in range(len(self.entities_windows)):
-            self.entities_windows[i].title(self.entities[i].name)
-            details_label = tkinter.Label(master=self.entities_windows[i], text=self.entities[i].__repr__(),
-                                          justify="left")
-            details_label.pack()
-            self.entities_details.append(details_label)
-
     def update_detail_windows(self):
         """
         Updates the detail window for all entities.
         """
 
-        for i in range(len(self.entities_details)):
-            self.entities_details[i]["text"] = self.entities[i].__repr__()
+        for window in self.entities_windows:
+            window.update()
 
     def update_player_skill_buttons(self):
         """
