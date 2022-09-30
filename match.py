@@ -369,6 +369,7 @@ class Match:
         food.use_function(self)
         self.disable_food_buttons()
         self.update_rotation_log(food.name, double_turn=True)
+        self.update_detail_windows()
 
     def setup_window_food(self):
         """
