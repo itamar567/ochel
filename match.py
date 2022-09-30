@@ -691,10 +691,11 @@ class Match:
 
     def export(self):
         text = ""
-        if self.player.stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
+        stats = classes.MainStats(player_values.stats)
+        if stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
             text = "== Stats =="
             if self.player.stats.__repr__() != "":
-                text += f"\n{self.player.stats}"
+                text += f"\n{stats}"
             if isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != "":
                 text += f"\n{self.pet.stats}"
             text += "\n\n"
