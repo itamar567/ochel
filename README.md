@@ -2,7 +2,7 @@
 OCHEL is a Python program that imitates DragonFable fights and provides an easier and faster way to create boss fights strategies and calculations.
 
 ## Features
-OCHEL currently supports all game mechanics except for trinkets, on-attack specials, on-click specials, pet switching, and mana resistance.
+OCHEL currently supports all game mechanics except for trinkets, on-click specials, pet switching, and mana resistance.
 
 ## Classes
 Currently implemented classes:
