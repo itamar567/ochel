@@ -320,6 +320,8 @@ Resistances:"""
 Effects:"""
         # The order the effects show in DF is the reversed order of self.effects
         for effect in reversed(self.effects):
+            if not effect.visible:
+                continue
             result += f"\n        {effect.name}: "
             if len(effect.bonuses.keys()) > 0:
                 for bonus in effect.bonuses.keys():
