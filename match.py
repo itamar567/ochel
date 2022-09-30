@@ -446,6 +446,11 @@ class Match:
         self.buttons["Back"] = (button, button.grid_info())
         self.buttons["Back"][0]["state"] = "disabled"
 
+        button = tkinter.Button(master=self.window, text="Export")
+        button.bind("<Button-1>", self.export_onclick)
+        button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 1, padx=5, pady=5)
+        self.buttons["Export"] = (button, button.grid_info())
+
     def show_window_player(self):
         """
         Shows the player window widgets after they were removed.
@@ -708,3 +713,11 @@ class Match:
         text += "\n== Potions / Food =="
         text += f"\n{hp_potions_used}x HP, {mp_potions_used}x MP potion(s) used"
         return text
+
+    def export_onclick(self, event):
+        window = tkinter.Tk()
+        window.title("Exported match")
+        scrolled_text = tkinter.scrolledtext.ScrolledText(master=window)
+        scrolled_text.insert("1.0", self.export())
+        scrolled_text["state"] = "disabled"
+        scrolled_text.pack()
