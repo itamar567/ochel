@@ -105,3 +105,15 @@ def copy_dict(dict_to_copy):
 
 def clamp(value, minimum, maximum):
     return min(maximum, max(value, minimum))
+
+
+def get_weakness_element(entity, default):
+    element = default
+    resist = entity.resists.get(default, 0)
+    for elem in entity.resists.keys():
+        if elem in ("immobility", "health", "shrink"):
+            continue
+        if entity.resists[elem] < resist:
+            element = elem
+            resist = entity.resists[elem]
+    return element

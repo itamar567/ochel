@@ -3,12 +3,15 @@ import math
 import classes
 import constants
 import misc
+import player_values
 import utilities
 
 
 class PetKidDragon(classes.Pet):
     def __init__(self, name, player, stats):
         super().__init__(name, player)
+
+        self.element = player_values.pet_dragon_element
         self.enemies = player.match.enemies
         self.stats = stats
         self.bonuses = {"crit_multiplier": 1.75, "bonus": math.floor(20 + self.level * 0.5), "crit": 10}
@@ -120,8 +123,11 @@ class PetKidDragon(classes.Pet):
         self.match.player.add_effect(self.available_effects.dragons_scales(self.stats.protection))
 
     def skill_elemental_supernova(self):
+        old_element = self.element
+        self.element = utilities.get_weakness_element(self.match.targeted_enemy, "curse")
         self.attack_with_bonus({"crit": self.stats.magic}, self.match.targeted_enemy,
                                damage_multiplier=(1 + self.stats.magic / 100))
+        self.element = old_element
 
     def skill_outrage(self):
         hit = False

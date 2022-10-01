@@ -72,7 +72,7 @@ class Match:
         self.skip_button_image = tkinter.PhotoImage(file="images/skip.png")
 
         # Setup main window and pet
-        self.pet = pets.PetKidDragon(player_values.pet_name, self.player, classes.PetStats(player_values.pet_stats))
+        self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, classes.PetStats(player_values.pet_stats))
         self.setup_window_pet()
         self.softclear_window()
         self.setup_window_player()

@@ -85,7 +85,7 @@ class Pet:
         :param player: The player
         """
 
-        self.element = "fire"
+        self.element = None
         self.name = name
         self.level = player.level
         self.match = player.match
