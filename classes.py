@@ -338,10 +338,11 @@ Effects:"""
             result += f"{effect_duration} turn(s) left."
         return result
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[], mana_attack=False):
         """
         Attacks an entity.
-        :param inflicts: List of effects to inflict on the target
+        :param mana_attack: Whether to attack mana or HP.
+        :param inflicts: List of effects to inflict on the target.
         :param can_miss: Whether the attack can miss.
         :param element: The element used in the attack, will use self.element if not specified.
         :param entity: The entity to attack.
@@ -404,14 +405,14 @@ Effects:"""
 
         if glancing:
             if crit:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True, inflicts=inflicts)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True, inflicts=inflicts, mana_attack=mana_attack)
             else:
-                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True, inflicts=inflicts)
+                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True, inflicts=inflicts, mana_attack=mana_attack)
         else:
             if crit:
-                damage_dealt = entity.attacked(damage, self.element, self, crit=True, inflicts=inflicts)
+                damage_dealt = entity.attacked(damage, self.element, self, crit=True, inflicts=inflicts, mana_attack=mana_attack)
             else:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, inflicts=inflicts)
+                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, inflicts=inflicts, mana_attack=mana_attack)
 
             self.on_hit_special(self.match, entity, damage)
             self.element = old_element
@@ -448,10 +449,11 @@ Effects:"""
             if self.bonuses[bonus] == 0:
                 self.bonuses.pop(bonus)
 
-    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[]):
+    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[], mana_attack=False):
         """
         Receive damage from an attack
 
+        :param mana_attack: Whether to attack mana or HP
         :param damage: The received attack's damage
         :param element: The received attack's element
         :param entity: The entity that made the attack (used for logging)
@@ -464,41 +466,30 @@ Effects:"""
 
         if self.hp == 0:
             return
-
-        if element == "mana":
-            if glancing:
-                return 0
-            damage = round(damage)
-            self.mp = utilities.clamp(self.mp - damage, 0, self.max_mp)
-            if damage < 0:
-                if dot:
-                    self.match.update_main_log(f"{self.name} recovers {-damage} MP from {entity.name}.", f"{self.tag_prefix}_mana_heal_dot")
-                else:
-                    self.match.update_main_log(f"{self.name} recovers {-damage} MP.", f"{self.tag_prefix}_mana_heal")
-            else:
-                if dot:
-                    self.match.update_main_log(f"{self.name} takes {damage} {element} damage to MP from {entity.name}.", f"{self.tag_prefix}_mana_dot")
-                else:
-                    self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage to MP.", f"{self.tag_prefix}_mana_attacked")
-            return damage
         cap = self.resist_cap
         if element == "immobility":
             cap = math.inf
-        all_resist = self.resists.get("all", 0) if element != "null" else 0  # Null attacks ignore all resist
+        all_resist = self.resists.get("all", 0) if constants.MANA_ELEMENT != element != "null" else 0  # Null and mana attacks ignore all resist
         resist = min(all_resist + self.resists.get(element, 0), cap)
         damage *= (100 - resist) / 100
         if element == "health":
             damage = round(damage)
-            self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
-            if dot:
-                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
+            if mana_attack:
+                self.mp = utilities.clamp(self.mp + damage, 0, self.max_mp)
             else:
-                self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
+                self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
+            if dot:
+                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} {'MP' if mana_attack else 'HP'}.", f"{self.tag_prefix}_hot")
+            else:
+                self.match.update_main_log(f"{self.name} recovers {damage} {'MP' if mana_attack else 'HP'}.", f"{self.tag_prefix}_heal")
 
             for effect in inflicts:
                 self.add_effect(effect)
         else:
             damage = round(damage)
+
+            if mana_attack and glancing and not crit:
+                damage = 0  # Non-crit glancing mana attacks result in 0 damage
 
             for effect in self.effects:
                 if effect.retaliation is not None and entity is not self.match.pet and not dot:
@@ -514,26 +505,30 @@ Effects:"""
                     dmg = effect.damage_reflection.get_damage(damage, not dot)
                     entity.hp = utilities.clamp(entity.hp - dmg, 1, entity.max_hp)
                     self.match.update_main_log(f"{entity.name} takes {dmg} damage from {effect.name}", f"{entity.tag_prefix}_attacked")
-            if self.death_proof and not dot:
+            if self.death_proof and not dot and not mana_attack:
                 if damage >= self.hp:
                     if self.hp == 1:
                         damage = 0
                     else:
                         damage = self.hp // 2
-            self.hp = utilities.clamp(self.hp - damage, 0, self.max_hp)
+            if mana_attack:
+                self.mp = utilities.clamp(self.mp - damage, 0, self.max_mp)
+            else:
+                self.hp = utilities.clamp(self.hp - damage, 0, self.max_hp)
+            dmg_message = "damage to MP" if mana_attack else "damage"
             if dot:
-                self.match.update_main_log(f"{self.name} takes {damage} {element} damage from {entity.name}.", f"{self.tag_prefix}_dot")
+                self.match.update_main_log(f"{self.name} takes {damage} {element} {dmg_message} from {entity.name}.", f"{self.tag_prefix}_dot")
             else:
                 if glancing:
                     if crit:
-                        self.match.update_main_log(f"{entity.name} critically glances {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_crit_glance")
+                        self.match.update_main_log(f"{entity.name} critically glances {self.name} for {damage} {element} {dmg_message}.", f"{self.tag_prefix}_attacked_crit_glance")
                     else:
-                        self.match.update_main_log(f"{entity.name} glances {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_glance")
+                        self.match.update_main_log(f"{entity.name} glances {self.name} for {damage} {element} {dmg_message}.", f"{self.tag_prefix}_attacked_glance")
                 else:
                     if crit:
-                        self.match.update_main_log(f"{entity.name} critically hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked_crit")
+                        self.match.update_main_log(f"{entity.name} critically hits {self.name} for {damage} {element} {dmg_message}.", f"{self.tag_prefix}_attacked_crit")
                     else:
-                        self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} damage.", f"{self.tag_prefix}_attacked")
+                        self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} {dmg_message}.", f"{self.tag_prefix}_attacked")
 
             for effect in inflicts:
                 self.add_effect(effect)
@@ -914,7 +909,7 @@ class Player(Entity):
         Use an MP potion.
         """
 
-        self.attacked(-self.mp_potion_value, "mana")
+        self.attacked(-self.mp_potion_value, constants.MANA_ELEMENT, entity=self, mana_attack=True)
 
     def next(self):
         """
@@ -1066,7 +1061,7 @@ class Enemy(Entity):
         if self.stunned:
             return constants.ENEMY_STUNNED_STR
 
-    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[]):
+    def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[], mana_attack=False):
         if element == "health":
             cap = self.resist_cap
             resist = min(self.resists.get("all", 0) + self.resists.get(element, 0), cap)
@@ -1074,11 +1069,14 @@ class Enemy(Entity):
             if resist > 100 and not dot:  # Enemies with 100+ health resist heal for 1 HP from sources that aren't HoTs.
                 damage = 1
             damage = round(damage)
-            self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
-            if dot:
-                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} HP.", f"{self.tag_prefix}_hot")
+            if mana_attack:
+                self.mp = utilities.clamp(self.mp + damage, 0, self.max_mp)
             else:
-                self.match.update_main_log(f"{self.name} recovers {damage} HP.", f"{self.tag_prefix}_heal")
+                self.hp = utilities.clamp(self.hp + damage, 0, self.max_hp)
+            if dot:
+                self.match.update_main_log(f"{self.name} heals {self.name} for {damage} {'MP' if mana_attack else 'HP'}.", f"{self.tag_prefix}_hot")
+            else:
+                self.match.update_main_log(f"{self.name} recovers {damage} {'MP' if mana_attack else 'HP'}.", f"{self.tag_prefix}_heal")
             return damage
         else:
-            return super().attacked(damage, element, entity, dot, glancing, crit, inflicts=inflicts)
+            return super().attacked(damage, element, entity, dot, glancing, crit, inflicts=inflicts, mana_attack=mana_attack)

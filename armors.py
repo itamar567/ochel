@@ -331,7 +331,7 @@ class Technomancer(classes.Player):
 
         self.heat_level = min(self.heat_level + 1, 20)
         self.old_mp = self.mp
-        self.attacked(self.heat_level, "mana", entity=self)
+        self.attacked(self.heat_level, "mana", entity=self, mana_attack=True)
         self.match.update_player_skill_buttons()
         self.match.update_detail_windows()
 
@@ -361,9 +361,9 @@ class Technomancer(classes.Player):
         assert skill in self.mana_cost.keys()
         return self.mana_cost[skill] <= self.old_mp
 
-    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
+    def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[], mana_attack=False):
         return super().attack(entity, damage_multiplier=damage_multiplier * (1 + self.drive_boost()/100), damage_additive=damage_additive,
-                              multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage, inflicts=inflicts)
+                              multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage, inflicts=inflicts, mana_attack=mana_attack)
 
     def skill_vent_heat(self):
         self.attack(self.match.targeted_enemy, damage_multiplier=0.1 * self.heat_level, inflicts=[self.available_effects.vent_heat(self.heat_level)])
