@@ -237,6 +237,7 @@ class Match:
         # Setup enemies and player
         self.window = tkinter.Tk()
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
+        self.stats, self.pet_stats = self.choose_stats()
         self.trinket = self.choose_trinket()
         self.player = self.choose_armor()
         self.enemies = self.choose_enemies()
@@ -255,7 +256,7 @@ class Match:
         self.trinket_img = None
 
         # Setup main window and pet
-        self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, classes.PetStats(player_values.pet_stats))
+        self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, self.pet_stats)
         self.setup_window_pet()
         self.softclear_window()
         self.setup_window_player()
@@ -366,7 +367,69 @@ class Match:
             self.window.update()
             time.sleep(player_values.REFRESH_RATE)
 
+        self.clear_window()
         return chosen_trinket
+
+    def choose_stats(self):
+        self.softclear_window()
+        self.window.title("Insert Stats")
+        player_stats = None
+        pet_stats = None
+
+        def button_clicked(event):
+            nonlocal player_stats
+            nonlocal pet_stats
+            player_stats = classes.MainStats([int(stat_entry.get()) for stat_entry in player_stats_entries])
+            pet_stats = classes.PetStats([int(stat_entry.get()) for stat_entry in pet_stats_entries])
+
+        current_row_index = 0
+
+        player_stats_label = tkinter.Label(master=self.window, text="Player stats:")
+        player_stats_label.grid(row=current_row_index, column=0)
+        current_row_index += 1
+        player_stats_entries = []
+
+        for stat in ("STR", "DEX", "INT", "CHA", "LUK", "END", "WIS"):
+            current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
+            current_stat_label.grid(row=current_row_index, column=0, padx=5)
+            current_stat_entry = tkinter.Entry(master=self.window)
+            current_stat_entry.insert("end", "0")
+            current_stat_entry.grid(row=current_row_index, column=1, padx=5)
+            player_stats_entries.append(current_stat_entry)
+            current_row_index += 1
+
+        # Newline
+        tkinter.Label(master=self.window).grid(row=current_row_index, column=0)
+        current_row_index += 1
+
+        pet_stats_label = tkinter.Label(master=self.window, text="Pet stats:")
+        pet_stats_label.grid(row=current_row_index, column=0)
+        current_row_index += 1
+        pet_stats_entries = []
+
+        for stat in ("protection", "magic", "fighting", "assistance", "mischief"):
+            current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
+            current_stat_label.grid(row=current_row_index, column=0, padx=5)
+            current_stat_entry = tkinter.Entry(master=self.window)
+            current_stat_entry.insert("end", "0")
+            current_stat_entry.grid(row=current_row_index, column=1, padx=5)
+            pet_stats_entries.append(current_stat_entry)
+            current_row_index += 1
+
+        # Newline
+        tkinter.Label(master=self.window).grid(row=current_row_index, column=0)
+        current_row_index += 1
+
+        finish_button = tkinter.Button(master=self.window, text="Finish")
+        finish_button.bind("<Button-1>", button_clicked)
+        finish_button.grid(row=current_row_index, column=0)
+
+        while player_stats is None:
+            self.window.update()
+            time.sleep(player_values.REFRESH_RATE)
+
+        self.clear_window()
+        return player_stats, pet_stats
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -617,7 +680,7 @@ class Match:
         self.clear_window()
         player_gear = Gear.get_build(player_values.default_build_id)
         player_gear[constants.SLOT_TRINKET] = self.trinket
-        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=player_gear)
+        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, self.stats, level=player_values.level, gear=player_gear)
 
     def choose_enemies(self):
         """
@@ -1014,7 +1077,7 @@ class Match:
 
     def export(self):
         text = ""
-        stats = classes.MainStats(player_values.stats)
+        stats = classes.MainStats(self.stats)
         if stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
             text = "== Stats =="
             if self.player.stats.__repr__() != "":
