@@ -299,6 +299,7 @@ class Match:
         self.main_log_widget.tag_config("e_dot", foreground="yellow")
         self.main_log_widget.tag_config("p_comment", foreground="green")
         self.main_log_widget.tag_config("e_comment", foreground="green")
+        self.main_log_widget.tag_config("pet_comment", foreground="green")
         self.main_log_widget.tag_config("p_attacked", foreground="red")
         self.main_log_widget.tag_config("p_attacked_crit", foreground="red")
         self.main_log_widget.tag_config("p_attacked_glance", foreground="red")

@@ -221,7 +221,7 @@ class Pet:
             return
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_waking_up.append(self.waking_up)
-        self.match.update_main_log(f"{self.name} uses skill {self.skill_names[event.widget.skill]}", "p_comment")
+        self.match.update_main_log(f"{self.name} uses skill {self.skill_names[event.widget.skill]}", "pet_comment")
         if event.widget.skill != " ":
             self.match.update_rotation_log(self.skill_names[event.widget.skill], add_to_last_attack=True)
         if event.widget.skill != "M":
