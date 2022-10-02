@@ -74,7 +74,7 @@ def stun_chance(entity):
 
 
 def dot_dpt(entity, multiplier):
-    return multiplier * entity.damage[0] * entity.dot_multiplier, multiplier * entity.damage[1] * entity.dot_multiplier
+    return round(multiplier * entity.damage[0] * entity.dot_multiplier), round(multiplier * entity.damage[1] * entity.dot_multiplier)
 
 
 def num_to_str_with_plus_minus_sign(num):
