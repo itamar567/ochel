@@ -17,8 +17,9 @@ Currently implemented enemies:
 - Oratath
 
 ## Gear
-Refer to the [Gear folder](/gear) for a list of implemented items.
-Currently, there are only a few items created for testing. I plan on adding all the BiS gear in the future.
+Currently, no trinkets/special weapons are supported, and the only supported pet is the kid dragon.
+You can add your own gear (except trinkets/special weapons/pets) using the inventory after starting a match.
+The gear you added will be saved, and you will be able to use it in future matches.
 
 ## Getting Started
 OCHEL is currently in pre-alpha, and therefore I do not suggest using it for damage calculations at the current state.

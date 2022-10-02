@@ -1,27 +1,5 @@
 import random
 
-import constants
-
-
-class Item:
-    def __init__(self, name, bonuses, resists):
-        self.name = name
-        self.bonuses = bonuses
-        self.resists = resists
-
-
-class Weapon(Item):
-    def __init__(self, name, dmg_type, element, min_damage, max_damage, bonuses, resists,
-                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL,
-                 on_attack_special=None, on_attack_special_chance=0):
-        super().__init__(name, bonuses, resists)
-        self.damage = (min_damage, max_damage)
-        self.dmg_type = dmg_type
-        self.element = element
-        self.on_hit_special = on_hit_special
-        self.on_attack_special = on_attack_special
-        self.on_attack_special_chance = on_attack_special_chance
-
 
 class Food:
     def __init__(self, name, stuffed_duration, use_function):

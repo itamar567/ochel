@@ -9,6 +9,7 @@ import match_constants
 import misc
 import pets
 import player_values
+from gear.gear import Gear, Item, Weapon
 
 
 class DetailWindow:
@@ -44,6 +45,185 @@ class DetailWindow:
         self.mp_progress_bar["value"] = (self.entity.mp / self.entity.max_mp)
         self.mp_progress_label["text"] = f"{self.entity.mp} / {self.entity.max_mp} (~{math.ceil((self.entity.mp / self.entity.max_mp) * 100)}%)"
         self.details_label["text"] = self.entity.get_details()
+
+
+class AddItemWindow:
+    def __init__(self, match):
+        self.match = match
+        self.window = tkinter.Tk()
+        self.window.title("Choose Item Type")
+
+        self.dmg_type = None
+        self.slot = None
+        self.name_entry = None
+        self.id_entry = None
+        self.elem_entry = None
+        self.dmg_min_entry = None
+        self.dmg_max_entry = None
+        self.bonuses_entry = None
+        self.resists_entry = None
+
+        for index, slot in enumerate(constants.INVENTORY_SLOTS):
+            button_img = tkinter.PhotoImage(master=self.window, file=f"images/inv_icons/{slot}.png")
+            button = tkinter.Button(master=self.window, image=button_img)
+            button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
+            button.slot = slot
+            button.bind("<Button-1>", self.update_window_after_slot_selection)
+            button.grid(column=index, row=0)
+
+    def clear_window(self):
+        for widget in self.window.children.values():
+            widget.grid_remove()
+
+    def update_window_after_slot_selection(self, event):
+        self.slot = event.widget.slot
+        if self.slot == constants.SLOT_WEAPON:
+            self.update_window_to_select_dmg_type()
+        else:
+            self.update_window_to_insert_item_stats()
+
+    def update_window_to_select_dmg_type(self):
+        self.clear_window()
+        self.window.title("Choose Damage Type")
+        for index, dmg_type in enumerate(constants.DMG_TYPES):
+            button = tkinter.Button(master=self.window, text=constants.DMG_TYPE_NAMES[dmg_type])
+            button.grid(column=index, row=0)
+            button.dmg_type = dmg_type
+            button.bind("<Button-1>", self.update_window_to_insert_weapon_stats)
+
+    def update_window_to_insert_item_stats(self):
+        self.clear_window()
+        self.window.title("Stats")
+
+        # Row 1: name
+        name_label = tkinter.Label(master=self.window, text="Item name: ")
+        self.name_entry = tkinter.Entry(master=self.window)
+        name_label.grid(row=1, column=0)
+        self.name_entry.grid(row=1, column=1)
+
+        # Row 2: ID
+        id_label = tkinter.Label(master=self.window, text="Item ID: ")
+        self.id_entry = tkinter.Entry(master=self.window)
+        id_label.grid(row=2, column=0)
+        self.id_entry.grid(row=2, column=1)
+
+        # Row 3: Bonuses
+        bonuses_label = tkinter.Label(master=self.window, text="Bonuses: ")
+        self.bonuses_entry = tkinter.Entry(master=self.window)
+        bonuses_label.grid(row=3, column=0)
+        self.bonuses_entry.grid(row=3, column=1)
+
+        # Row 4: Resists
+        resists_label = tkinter.Label(master=self.window, text="Resistances: ")
+        self.resists_entry = tkinter.Entry(master=self.window)
+        resists_label.grid(row=4, column=0)
+        self.resists_entry.grid(row=4, column=1)
+
+        finish_button = tkinter.Button(master=self.window, text="Add")
+        finish_button.bind("<Button-1>", self.add_item)
+        finish_button.grid(row=5, column=0)
+
+    def update_window_to_insert_weapon_stats(self, event):
+        self.clear_window()
+        self.window.title("Stats")
+        self.dmg_type = event.widget.dmg_type
+
+        # Row 1: name
+        name_label = tkinter.Label(master=self.window, text="Weapon name: ")
+        self.name_entry = tkinter.Entry(master=self.window)
+        name_label.grid(row=1, column=0)
+        self.name_entry.grid(row=1, column=1)
+
+        # Row 2: ID
+        id_label = tkinter.Label(master=self.window, text="Weapon ID: ")
+        self.id_entry = tkinter.Entry(master=self.window)
+        id_label.grid(row=2, column=0)
+        self.id_entry.grid(row=2, column=1)
+
+        # Row 3: element
+        elem_label = tkinter.Label(master=self.window, text="Weapon Element: ")
+        self.elem_entry = tkinter.Entry(master=self.window)
+        elem_label.grid(row=3, column=0)
+        self.elem_entry.grid(row=3, column=1)
+
+        # Row 4: damage
+        dmg_label_1 = tkinter.Label(master=self.window, text="Weapon Damage: ")
+        self.dmg_min_entry = tkinter.Entry(master=self.window)
+        dmg_label_2 = tkinter.Label(master=self.window, text=" - ")
+        self.dmg_max_entry = tkinter.Entry(master=self.window)
+        dmg_label_1.grid(row=4, column=0)
+        self.dmg_min_entry.grid(row=4, column=1)
+        dmg_label_2.grid(row=4, column=2)
+        self.dmg_max_entry.grid(row=4, column=3)
+
+        # Row 5: Bonuses
+        bonuses_label = tkinter.Label(master=self.window, text="Bonuses: ")
+        self.bonuses_entry = tkinter.Entry(master=self.window)
+        bonuses_label.grid(row=5, column=0)
+        self.bonuses_entry.grid(row=5, column=1)
+
+        # Row 6: Resists
+        resists_label = tkinter.Label(master=self.window, text="Resistances: ")
+        self.resists_entry = tkinter.Entry(master=self.window)
+        resists_label.grid(row=6, column=0)
+        self.resists_entry.grid(row=6, column=1)
+
+        finish_button = tkinter.Button(master=self.window, text="Add")
+        finish_button.bind("<Button-1>", self.add_item)
+        finish_button.grid(row=7, column=0)
+
+    def add_item(self, event):
+        name = self.name_entry.get()
+        identifier = self.id_entry.get()
+        bonuses_str = self.bonuses_entry.get()
+        resists_str = self.resists_entry.get()
+
+        bonuses = {}
+        if bonuses_str.strip() != "":
+            for bonus in bonuses_str.split(", "):
+                if bonus.upper() != bonus:  # Not a stat bonus
+                    bonus = bonus.lower()  # Non-stat bonuses are lowercase
+                bonus = bonus.replace("melee def", "melee_def")
+                bonus = bonus.replace("pierce def", "pierce_def")
+                bonus = bonus.replace("magic def", "magic_def")
+                bonus_name = bonus.split(" ")[0]
+                bonus_value = int(bonus.split(" ")[1])
+                bonuses[bonus_name] = bonus_value
+
+            bpd = ("block", "parry", "dodge")
+            # If all bpd values are the same, use bpd instead of block, parry and dodge
+            if all(x in bonuses for x in bpd) and bonuses[bpd[0]] == bonuses[bpd[1]] == bonuses[bpd[2]]:
+                value = bonuses[bpd[0]]
+                for bonus in bpd:
+                    bonuses.pop(bonus)
+                bonuses["bpd"] = value
+
+            mpm = ("melee_def", "pierce_def", "magic_def")
+            # If all mpm values are the same, use mpm instead of melee_def, pierce_def and magic_def
+            if all(x in bonuses for x in mpm) and bonuses[mpm[0]] == bonuses[mpm[1]] == bonuses[mpm[2]]:
+                value = bonuses[mpm[0]]
+                for bonus in mpm:
+                    bonuses.pop(bonus)
+                bonuses["mpm"] = value
+
+        resists = {}
+        if resists_str.strip() != "":
+            for elem in resists_str.split(", "):
+                elem = elem.lower()  # All resistances are lowercase
+                elem_name = elem.split(" ")[0]
+                elem_value = int(elem.split(" ")[1])
+                resists[elem_name] = elem_value
+
+        if self.slot != constants.SLOT_WEAPON:
+            item = Item(name, identifier, bonuses, resists)
+        else:
+            element = self.elem_entry.get().lower()
+            min_dmg = int(self.dmg_min_entry.get())
+            max_dmg = int(self.dmg_max_entry.get())
+            item = Weapon(name, identifier, self.dmg_type, element, min_dmg, max_dmg, bonuses, resists)
+        Gear.save_item(item, self.slot)
+        self.match.update_inv_window_by_slot(self.slot)
+        self.window.destroy()
 
 
 class Match:
@@ -87,6 +267,18 @@ class Match:
         self.log_window = tkinter.Tk()
         self.log_window.title("Log")
         self.main_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
+
+        # Setup inventory window
+        self.inv_window = tkinter.Tk()
+        self.inv_buttons = []
+        self.inv_build_load_button = None
+        self.inv_gear_list = None
+        self.build_entry = None
+        self.inv_buttons_disabled = False
+        self.current_inv_item_list = None
+        self.current_inv_slot_list = None
+        self.builds = Gear.get_all_builds()
+        self.setup_inv_window()
 
         # Log color config
         # if the tag stats with 'p_', the tag is related to the player
@@ -132,17 +324,6 @@ class Match:
             self.setup_choose_targeted_enemy_window()
             self.choose_targeted_enemy_buttons[0]["state"] = "disabled"
 
-        # Setup builds window
-        if len(player_values.gear_builds) > 0:
-            self.gear_builds_window = tkinter.Tk()
-            self.gear_builds_window.title("Builds")
-            self.gear_builds_buttons = []
-            for i in range(len(player_values.gear_builds)):
-                button = tkinter.Button(master=self.gear_builds_window, text=f"Build {i + 1}")
-                button.bind("<Button-1>", self.switch_to_gear_build_button_onclick)
-                button.grid(column=0, row=i)
-                self.gear_builds_buttons.append(button)
-
         # Setup entities windows
         self.entities_windows = []
         for entity in self.entities:
@@ -154,13 +335,140 @@ class Match:
             for window in self.entities_windows:
                 window.update()
             self.log_window.update()
-            self.gear_builds_window.update()
             self.food_window.update()
+            self.inv_window.update()
             if self.player.extra_window is not None:
                 self.player.extra_window.update()
             if self.choose_targeted_enemy_window is not None:
                 self.choose_targeted_enemy_window.update()
             time.sleep(0.01)
+
+    def equip_item_onclick(self, event):
+        if event.widget["state"] == "disabled":
+            return
+        if event.widget.equipped:
+            self.player.unequip(event.widget.slot)
+        else:
+            self.player.equip(event.widget.slot, event.widget.item)
+        self.refresh_inv_window()
+
+    def setup_inv_window(self):
+        self.inv_window.title("Inventory")
+        upper_frame = tkinter.Frame(master=self.inv_window)
+        upper_frame.pack(side=tkinter.TOP)
+        self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame)
+        self.inv_gear_list.pack(side=tkinter.TOP)
+        self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
+        for index, slot in enumerate(constants.INVENTORY_SLOTS):
+            button_img = tkinter.PhotoImage(master=upper_frame, file=f"images/inv_icons/{slot}.png")
+            button = tkinter.Button(master=upper_frame, image=button_img)
+            button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
+            button.slot = slot
+            button.bind("<Button-1>", self.update_inv_window_onclick)
+            button.pack(side=tkinter.LEFT)
+        add_item_button = tkinter.Button(master=upper_frame, text="+")
+        add_item_button.bind("<Button-1>", self.add_item_onclick)
+        add_item_button.pack(side=tkinter.LEFT)
+
+        build_label = tkinter.Label(master=self.inv_window, text="Build ID:")
+        build_label.pack(side=tkinter.LEFT, padx=5)
+        self.build_entry = tkinter.Entry(master=self.inv_window)
+        self.build_entry.pack(side=tkinter.LEFT)
+
+        build_save_button = tkinter.Button(master=self.inv_window, text="Save")
+        build_save_button.bind("<Button-1>", self.save_build_onclick)
+        build_save_button.pack(side=tkinter.LEFT, padx=5)
+
+        self.inv_build_load_button = tkinter.Button(master=self.inv_window, text="Load")
+        self.inv_build_load_button.bind("<Button-1>", self.load_build_onclick)
+        self.inv_build_load_button.pack(side=tkinter.LEFT, padx=5)
+
+        build_show_button = tkinter.Button(master=self.inv_window, text="Show")
+        build_show_button.bind("<Button-1>", self.show_build_onclick)
+        build_show_button.pack(side=tkinter.LEFT, padx=5)
+
+    def save_build_onclick(self, event):
+        build = {}
+        for slot in self.player.gear.keys():
+            build[slot] = self.player.gear[slot].identifier
+
+        Gear.save_build(build, self.build_entry.get())
+
+    def load_build_onclick(self, event):
+        if event.widget["state"] == "disabled":
+            return
+        build_id = self.build_entry.get()
+        build = Gear.get_build(build_id)
+        for slot in build.keys():
+            self.player.equip(slot, build[slot])
+        self.refresh_inv_window()
+        self.update_main_log(f"{self.player.name} switched to build {build_id}", "p_comment")
+        self.update_rotation_log(f"Switch to build {build_id}", double_turn=True)
+
+    def show_build_onclick(self, event):
+        build = Gear.get_build(self.build_entry.get())
+        item_list = []
+        slot_list = []
+        for slot in build.keys():
+            slot_list.append(slot)
+            item_list.append(build[slot])
+        self.update_inv_window_by_item_list(item_list, slot_list)
+
+    def refresh_inv_window(self):
+        self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
+
+    def update_inv_window_by_slot(self, slot):
+        item_list = Gear.get_gear_list(slot)
+        self.update_inv_window_by_item_list(item_list, [slot] * len(item_list))
+
+    def update_inv_window_by_item_list(self, item_list, slot_list):
+        """
+        Updates the inventory window using an item list and a slot list
+        :param item_list: The list of items to show
+        :param slot_list: A list of slots, slot_list[i] = slot of item_list[i]
+        """
+        self.current_inv_item_list = item_list
+        self.current_inv_slot_list = slot_list
+        self.inv_gear_list.configure(state="normal")
+        self.inv_gear_list.delete("1.0", "end")
+        self.inv_buttons = []
+        for index in range(len(item_list)):
+            if item_list[index].identifier in self.player.gear_identifiers:
+                text = "Unequip"
+                equipped = True
+            else:
+                text = "Equip"
+                equipped = False
+            button = tkinter.Button(master=self.inv_gear_list, text=text)
+            button.slot = slot_list[index]
+            button.item = item_list[index]
+            button.equipped = equipped
+            button.bind("<Button-1>", self.equip_item_onclick)
+            if self.inv_buttons_disabled:
+                button["state"] = "disabled"
+            self.inv_buttons.append(button)
+            self.inv_gear_list.insert("end", f"{item_list[index].name} ")
+            self.inv_gear_list.window_create("end", window=button)
+            self.inv_gear_list.insert("end", "\n")
+        self.inv_gear_list.configure(state="disabled")
+
+    def update_inv_window_onclick(self, event):
+        self.update_inv_window_by_slot(event.widget.slot)
+
+    def add_item_onclick(self, event):
+        AddItemWindow(self)
+
+    def disable_inventory_buttons(self):
+        self.inv_buttons_disabled = True
+        for button in self.inv_buttons:
+            button["state"] = "disabled"
+        self.inv_build_load_button["state"] = "disabled"
+
+    def enable_inventory_buttons(self):
+        self.inv_buttons_disabled = False
+        for button in self.inv_buttons:
+            button["state"] = "normal"
+        self.inv_build_load_button["state"] = "normal"
 
     def switch_targeted_enemy_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -185,30 +493,6 @@ class Match:
             button.bind("<Button-1>", self.switch_targeted_enemy_onclick)
             self.choose_targeted_enemy_buttons.append(button)
             button.pack()
-
-    def switch_to_gear_build_button_onclick(self, event):
-        """
-        Switches to a gear build based on a button click event
-
-        :param event: The button click event
-        """
-
-        if event.widget["state"] == "disabled":
-            return
-        build_index = int(event.widget["text"].split(" ")[1]) - 1
-        self.switch_to_gear_build(build_index)
-
-    def switch_to_gear_build(self, build_index):
-        """
-        Switches to a gear build based on a build index
-
-        :param build_index: The index of the build to switch to (starts at 0)
-        """
-
-        for slot in player_values.gear_builds[build_index].keys():
-            self.player.equip(slot, player_values.gear_builds[build_index][slot])
-        self.update_main_log(f"{self.player.name} switched to build {build_index + 1}", "p_comment")
-        self.update_rotation_log(f"Switch to build {build_index + 1}", double_turn=True)
 
     def update_rotation_log(self, attack_name, double_turn=False, add_to_last_attack=False):
         """
@@ -303,7 +587,7 @@ class Match:
             time.sleep(0.01)
 
         self.clear_window()
-        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=player_values.gear_builds[0])
+        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=Gear.get_build(player_values.default_build_id))
 
     def choose_enemies(self):
         """
@@ -433,22 +717,6 @@ class Match:
         for button in self.food_buttons.values():
             button["state"] = "normal"
 
-    def disable_build_buttons(self):
-        """
-        Disables the switch gear build buttons.
-        """
-
-        for button in self.gear_builds_buttons:
-            button["state"] = "disabled"
-
-    def enable_build_buttons(self):
-        """
-        Enables the switch gear build buttons.
-        """
-
-        for button in self.gear_builds_buttons:
-            button["state"] = "normal"
-
     def setup_window_player(self):
         """
         Setups the player window.
@@ -496,7 +764,7 @@ class Match:
         for button in self.buttons.values():
             button[0].grid(**button[1])
 
-        self.enable_build_buttons()
+        self.enable_inventory_buttons()
         stuffed = False
         for effect in self.player.effects:
             if effect.identifier == "food_stuffed":
@@ -604,7 +872,7 @@ class Match:
                 self.on_death(enemy)
 
         self.disable_food_buttons()
-        self.disable_build_buttons()
+        self.disable_inventory_buttons()
         if len(self.pet.skills.keys()) > len(["Attack", "Skip"]):
             self.softclear_window()
             self.update_pet_skill_buttons()
@@ -722,14 +990,15 @@ class Match:
                 text += f"\n{self.pet.stats}"
             text += "\n\n"
         text += "== Builds =="
-        for index, build in enumerate(player_values.gear_builds):
-            text += f"\n- Build {index}"
-            for slot in constants.SLOTS:
-                if slot in build.keys():
+        all_builds = Gear.get_all_builds()
+        for build_identifier in all_builds.keys():
+            text += f"\n- {build_identifier}"
+            for slot in constants.INVENTORY_SLOTS:
+                if slot in all_builds[build_identifier].keys():
                     text += "\n"
                     if slot == constants.SLOT_WEAPON_SPECIAL:
                         text += "Slotted: "
-                    text += build[slot].name
+                    text += all_builds[build_identifier][slot].name
             text += "\n"
         hp_potions_used = 5 - self.player.hp_potion_count
         mp_potions_used = 5 - self.player.mp_potion_count

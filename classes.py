@@ -721,6 +721,7 @@ class Player(Entity):
 
         # Gear
         self.gear = {}
+        self.gear_identifiers = set()  # Set of all items' identifiers
         self.gear_resists = {}
         self.gear_bonuses = {}
         self.gear_resists_uncapped = {}
@@ -798,6 +799,7 @@ class Player(Entity):
             self.match.pet.waking_up = True
             return
         self.gear[slot] = item
+        self.gear_identifiers.add(item.identifier)
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
             self.on_hit_special = item.on_hit_special
@@ -864,6 +866,7 @@ class Player(Entity):
         item = self.gear.pop(slot, None)
         if item is None:  # item isn't equipped
             return
+        self.gear_identifiers.remove(item.identifier)
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
             self.on_hit_special = constants.DEFAULT_ON_HIT_SPECIAL
