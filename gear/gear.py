@@ -7,11 +7,12 @@ import constants
 
 
 class Item:
-    def __init__(self, name, identifier, bonuses, resists):
+    def __init__(self, name, identifier, bonuses, resists, default=False):
         self.name = name
         self.identifier = identifier
         self.bonuses = bonuses
         self.resists = resists
+        self.default = default
 
 
 class Trinket(Item):
@@ -34,10 +35,10 @@ class Trinket(Item):
 
 
 class Weapon(Item):
-    def __init__(self, name, identifier, dmg_type, element, min_damage, max_damage, bonuses, resists,
+    def __init__(self, name, identifier, dmg_type, element, min_damage, max_damage, bonuses, resists, default=False,
                  on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL,
                  on_attack_special=None, on_attack_special_chance=0):
-        super().__init__(name, identifier, bonuses, resists)
+        super().__init__(name, identifier, bonuses, resists, default=default)
         self.damage = (min_damage, max_damage)
         self.dmg_type = dmg_type
         self.element = element

@@ -393,7 +393,7 @@ class Match:
     def save_build_onclick(self, event):
         build = {}
         for slot in self.player.gear.keys():
-            if slot not in constants.INVENTORY_SLOTS:
+            if slot not in constants.INVENTORY_SLOTS or self.player.gear[slot].default is True:
                 continue
             build[slot] = self.player.gear[slot].identifier
 
