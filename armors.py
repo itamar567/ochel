@@ -361,6 +361,8 @@ class Technomancer(classes.Player):
             return self.hp_potion_count > 0
         if skill == "M":
             return self.mp_potion_count > 0
+        if skill == "B":
+            return self.gear[constants.SLOT_TRINKET].ability_mana_cost <= self.old_mp
         assert skill in self.mana_cost.keys()
         return self.mana_cost[skill] <= self.old_mp
 

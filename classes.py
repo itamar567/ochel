@@ -748,15 +748,15 @@ class Player(Entity):
         # Some armors use an extra button (e.g. ChW for soulthreads)
         self.extra_window = None
 
+        for slot in gear.keys():
+            self.equip(slot, gear[slot], update_details=False)
+
         # Rollback data
         self.rollback_gear = [self.gear.copy()]
         self.rollback_cooldown = [self.active_cooldowns.copy()]
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
-
-        for slot in gear.keys():
-            self.equip(slot, gear[slot], update_details=False)
 
         # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
         self.hp = self.max_hp
@@ -986,6 +986,8 @@ class Player(Entity):
             return self.hp_potion_count > 0
         if skill == "M":
             return self.mp_potion_count > 0
+        if skill == "B":
+            return self.gear[constants.SLOT_TRINKET].ability_mana_cost <= self.mp
         assert skill in self.mana_cost.keys()
         return self.mana_cost[skill] <= self.mp
 
