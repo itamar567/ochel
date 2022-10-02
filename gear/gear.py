@@ -16,7 +16,7 @@ class Item:
 
 
 class Trinket(Item):
-    def __init__(self, name, identifier, bonuses, resists, ability_func=None, ability_mana_cost=0, ability_cooldown=0, ability_name=""):
+    def __init__(self, name, identifier, bonuses, resists, ability_func=None, ability_mana_cost=0, ability_cooldown=0, ability_name="", ability_img_path=None):
         """
         Creates a trinket
         :param name: The trinket's name
@@ -31,7 +31,10 @@ class Trinket(Item):
         self.ability_mana_cost = ability_mana_cost
         self.ability_cooldown = ability_cooldown
         self.ability_name = ability_name
-        self.ability_img_path = f"images/trinkets/{identifier}.png"
+        if ability_img_path is None:
+            self.ability_img_path = f"images/trinkets/{identifier}.png"
+        else:
+            self.ability_img_path = ability_img_path
 
 
 class Weapon(Item):
