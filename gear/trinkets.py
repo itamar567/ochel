@@ -22,4 +22,5 @@ def _the_corrupted_seven_ability_func(match):
         match.player.attack(match.targeted_enemy, damage_multiplier=2/34, element="water")
 
 
+trinkets["empty_trinket"] = Trinket("None", "empty_trinket", {}, {})
 trinkets["the_corrupted_seven"] = Trinket("The Corrupted Seven", "the_corrupted_seven", {"crit": 5, "WIS": 5, "END": 5, "CHA": 5, "LUK": 5, "INT": 8, "DEX": 8, "STR": 8, "bonus": 5}, {"all": 4, "health": -4}, ability_func=_the_corrupted_seven_ability_func, ability_cooldown=34, ability_mana_cost=30, ability_name="Seven")

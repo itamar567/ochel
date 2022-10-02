@@ -237,6 +237,7 @@ class Match:
         # Setup enemies and player
         self.window = tkinter.Tk()
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
+        self.trinket = self.choose_trinket()
         self.player = self.choose_armor()
         self.enemies = self.choose_enemies()
         self.enemies_alive = self.enemies.copy()
@@ -345,6 +346,27 @@ class Match:
             if self.choose_targeted_enemy_window is not None:
                 self.choose_targeted_enemy_window.update()
             time.sleep(player_values.REFRESH_RATE)
+
+    def choose_trinket(self):
+        self.softclear_window()
+        self.window.title("Choose Trinket")
+        chosen_trinket = None
+
+        def button_clicked(event):
+            nonlocal chosen_trinket
+            chosen_trinket = trinkets[event.widget.trinket_id]
+
+        for index, trinket in enumerate(trinkets.values()):
+            button = tkinter.Button(master=self.window, text=trinket.name)
+            button.trinket_id = trinket.identifier
+            button.bind("<Button-1>", button_clicked)
+            button.grid(row=0, column=index, padx=5)
+
+        while chosen_trinket is None:
+            self.window.update()
+            time.sleep(player_values.REFRESH_RATE)
+
+        return chosen_trinket
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -570,6 +592,7 @@ class Match:
         :return: An instance of the chosen armor class, using values from player_values
         """
 
+        self.softclear_window()
         button_list = []
         armor_index = None
 
@@ -589,11 +612,11 @@ class Match:
 
         while armor_index is None:
             self.window.update()
-            time.sleep(0.01)
+            time.sleep(player_values.REFRESH_RATE)
 
         self.clear_window()
         player_gear = Gear.get_build(player_values.default_build_id)
-        player_gear[constants.SLOT_TRINKET] = trinkets[player_values.trinket]
+        player_gear[constants.SLOT_TRINKET] = self.trinket
         return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=player_gear)
 
     def choose_enemies(self):
