@@ -221,6 +221,7 @@ class Pet:
             return
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_waking_up.append(self.waking_up)
+        self.match.update_main_log(f"{self.name} uses skill {self.skill_names[event.widget.skill]}", "p_comment")
         if event.widget.skill != " ":
             self.match.update_rotation_log(self.skill_names[event.widget.skill], add_to_last_attack=True)
         if event.widget.skill != "M":
@@ -959,6 +960,7 @@ class Player(Entity):
         self.spend_mp_on_skill(event.widget.skill)
         if event.widget.skill not in ("N", "M"):
             self.active_cooldowns[event.widget.skill] = self.cooldowns[event.widget.skill] + 1
+        self.match.update_main_log(f"{self.name} uses skill {attack_name}", f"{self.tag_prefix}_comment")
         if self.skills[event.widget.skill]() != constants.SKILL_RETURN_CODE_DOUBLE_TURN:
             self.match.update_rotation_log(attack_name)
             self.match.pet_turn()
