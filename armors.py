@@ -48,6 +48,7 @@ class Chaosweaver(classes.Player):
 
         self.rollback_soulthreads = [self.soulthreads]
         self.rollback_bonuses = [self.bonuses.copy()]
+        self.rollback_empowered = [self.empowered]
 
         # Effects
         self.available_effects.soul_gambit = lambda: misc.Effect("Soul Gambit", "chaosweaver_soul_gambit", 8, {"mpm": -200, "bpd": -200}, {"all": -60, "health": +60})
@@ -78,6 +79,8 @@ class Chaosweaver(classes.Player):
         super().rollback()
         self.soulthreads = self.rollback_soulthreads[-2]
         self.rollback_soulthreads.pop()
+        self.empowered = self.rollback_empowered[-2]
+        self.rollback_empowered.pop()
         self.update_extra_button()
 
     def update_extra_button(self):
@@ -91,6 +94,7 @@ class Chaosweaver(classes.Player):
     def update_rollback_data(self):
         super().update_rollback_data()
         self.rollback_soulthreads.append(self.soulthreads)
+        self.rollback_empowered.append(self.empowered)
 
     def toggle_empowered_button_onclick(self, event):
         if self.soulthreads == 0 or self.empowered:

@@ -45,3 +45,5 @@ DEFAULT_ON_ATTACK_SPECIAL = lambda: None
 RETURN_CODE_USED_ON_ATTACK_SPECIAL = 5
 
 HP_MP_METER_LENGTH = 200  # The length of the HP and MP meters
+
+MANA_ELEMENT = "mana"
