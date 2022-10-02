@@ -341,7 +341,7 @@ class Match:
                 self.player.extra_window.update()
             if self.choose_targeted_enemy_window is not None:
                 self.choose_targeted_enemy_window.update()
-            time.sleep(0.01)
+            time.sleep(match_constants.REFRESH_RATE)
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -694,7 +694,7 @@ class Match:
         Setups the food window.
         """
 
-        for food in player_values.food_list:
+        for food in match_constants.FOOD_LIST:
             self.food_by_name[food.name] = food
             button = tkinter.Button(master=self.food_window, text=food.name)
             button.bind("<Button-1>", self.use_food_button_onclick)
