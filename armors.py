@@ -70,7 +70,10 @@ class Chaosweaver(classes.Player):
     def use_skill_button_onclick(self, event, attack_name=None):
         if event.widget["state"] == "disabled":
             return
-        attack_name = self.skill_names[event.widget.skill]
+        if event.widget.skill == "B":
+            attack_name = self.gear[constants.SLOT_TRINKET].ability_name
+        else:
+            attack_name = self.skill_names[event.widget.skill]
         if self.empowered and event.widget.skill in self.empowered_skills:
             attack_name = "e" + attack_name
         super().use_skill_button_onclick(event, attack_name=attack_name)
@@ -141,7 +144,7 @@ class Chaosweaver(classes.Player):
         self.attack(self.match.targeted_enemy)
 
     def skill_hexing_wheel(self):
-        self.match.update_player_cooldowns()
+        self.match.update_player_cooldowns(trinket=False)
         for i in range(8):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
 
@@ -390,7 +393,7 @@ class Technomancer(classes.Player):
 
     def skill_overclock(self):
         for i in range(3):
-            self.match.update_player_cooldowns()
+            self.match.update_player_cooldowns(trinket=False)
 
     def skill_reactive_barrier(self):
         self.add_effect(self.available_effects.barrier())

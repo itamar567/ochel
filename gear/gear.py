@@ -14,6 +14,25 @@ class Item:
         self.resists = resists
 
 
+class Trinket(Item):
+    def __init__(self, name, identifier, bonuses, resists, ability_func=None, ability_mana_cost=0, ability_cooldown=0, ability_name=""):
+        """
+        Creates a trinket
+        :param name: The trinket's name
+        :param identifier: The trinket's id
+        :param bonuses: The trinket's bonuses
+        :param resists: The trinket's resistances
+        :param ability_func: The trinket's ability (defaults to None when the trinket doesn't have an ability). Receives the match as an input.
+        """
+        super().__init__(name, identifier, bonuses, resists)
+
+        self.ability_func = ability_func
+        self.ability_mana_cost = ability_mana_cost
+        self.ability_cooldown = ability_cooldown
+        self.ability_name = ability_name
+        self.ability_img_path = f"images/trinkets/{identifier}.png"
+
+
 class Weapon(Item):
     def __init__(self, name, identifier, dmg_type, element, min_damage, max_damage, bonuses, resists,
                  on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL,

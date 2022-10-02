@@ -10,6 +10,7 @@ import misc
 import pets
 import player_values
 from gear.gear import Gear, Item, Weapon
+from gear.trinkets import trinkets
 
 
 class DetailWindow:
@@ -246,10 +247,11 @@ class Match:
             entity.match = self
         self.current_turn = 1
 
-        # We need to keep a reference to the HP&MP button images, so they won't get garbage-collected by python
+        # We need to keep a reference to the HP, MP, Skip and Trinket button images, so they won't get garbage-collected by python
         self.hp_button_img = tkinter.PhotoImage(file="images/hp.png")
         self.mp_button_img = tkinter.PhotoImage(file="images/mp.png")
         self.skip_button_image = tkinter.PhotoImage(file="images/skip.png")
+        self.trinket_img = None
 
         # Setup main window and pet
         self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, classes.PetStats(player_values.pet_stats))
@@ -391,6 +393,8 @@ class Match:
     def save_build_onclick(self, event):
         build = {}
         for slot in self.player.gear.keys():
+            if slot not in constants.INVENTORY_SLOTS:
+                continue
             build[slot] = self.player.gear[slot].identifier
 
         Gear.save_build(build, self.build_entry.get())
@@ -588,7 +592,9 @@ class Match:
             time.sleep(0.01)
 
         self.clear_window()
-        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=Gear.get_build(player_values.default_build_id))
+        player_gear = Gear.get_build(player_values.default_build_id)
+        player_gear[constants.SLOT_TRINKET] = trinkets[player_values.trinket]
+        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, classes.MainStats(player_values.stats), level=player_values.level, gear=player_gear)
 
     def choose_enemies(self):
         """
@@ -637,14 +643,16 @@ class Match:
                 if effect.identifier == "food_stuffed" and entity is self.player:
                     self.enable_food_buttons()
 
-    def update_player_cooldowns(self, reduce_cooldowns=True):
+    def update_player_cooldowns(self, reduce_cooldowns=True, trinket=True):
         """
         Updates the player buttons based on their cooldown.
-
+        :param trinket: Whether to update the trinket cooldown
         :param reduce_cooldowns: If True, will reduce all player skill cooldowns by 1
         """
         to_pop = []
         for skill in self.player.active_cooldowns.keys():
+            if not trinket and skill == "B":
+                continue
             if self.player.active_cooldowns[skill] == 1 and reduce_cooldowns:
                 to_pop.append(skill)
                 continue
@@ -732,9 +740,10 @@ class Match:
                 button_img = self.mp_button_img
             elif constants.KEYBOARD_CONTROLS[i] == "B":
                 if constants.SLOT_TRINKET not in self.player.gear.keys() \
-                        or self.player.gear[constants.SLOT_TRINKET].abillity is None:
+                        or self.player.gear[constants.SLOT_TRINKET].ability_func is None:
                     continue
-                button_img = self.player.gear[constants.SLOT_TRINKET].abillity[0]
+                button_img = tkinter.PhotoImage(file=self.player.gear[constants.SLOT_TRINKET].ability_img_path, master=self.window)
+                self.trinket_img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             else:
                 button_img = self.player.skill_images[constants.KEYBOARD_CONTROLS[i]]
             button = tkinter.Label(master=self.window, image=button_img, compound=tkinter.TOP)

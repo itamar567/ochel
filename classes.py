@@ -951,12 +951,23 @@ class Player(Entity):
         if event.widget["state"] == "disabled":
             return
         if attack_name is None:
-            attack_name = self.skill_names[event.widget.skill]
+            if event.widget.skill == "B":
+                attack_name = self.gear[constants.SLOT_TRINKET].ability_name
+            else:
+                attack_name = self.skill_names[event.widget.skill]
         self.spend_mp_on_skill(event.widget.skill)
         if event.widget.skill not in ("N", "M"):
-            self.active_cooldowns[event.widget.skill] = self.cooldowns[event.widget.skill] + 1
+            if event.widget.skill == "B":
+                cooldown = self.gear[constants.SLOT_TRINKET].ability_cooldown
+            else:
+                cooldown = self.cooldowns[event.widget.skill]
+            self.active_cooldowns[event.widget.skill] = cooldown + 1
         self.match.update_main_log(f"{self.name} uses skill {attack_name}", f"{self.tag_prefix}_comment")
-        if self.skills[event.widget.skill]() != constants.SKILL_RETURN_CODE_DOUBLE_TURN:
+        if event.widget.skill == "B":
+            skill_func_return_code = self.gear[constants.SLOT_TRINKET].ability_func(self.match)
+        else:
+            skill_func_return_code = self.skills[event.widget.skill]()
+        if skill_func_return_code != constants.SKILL_RETURN_CODE_DOUBLE_TURN:
             self.match.update_rotation_log(attack_name)
             self.match.pet_turn()
         else:
@@ -989,6 +1000,8 @@ class Player(Entity):
             self.hp_potion_count -= 1
         elif skill == "M":
             self.mp_potion_count -= 1
+        elif skill == "B":
+            self.mp = max(self.mp - self.gear[constants.SLOT_TRINKET].ability_mana_cost, 0)
         else:
             self.mp = max(self.mp - self.mana_cost[skill], 0)
 
