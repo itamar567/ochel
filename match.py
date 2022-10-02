@@ -341,7 +341,7 @@ class Match:
                 self.player.extra_window.update()
             if self.choose_targeted_enemy_window is not None:
                 self.choose_targeted_enemy_window.update()
-            time.sleep(match_constants.REFRESH_RATE)
+            time.sleep(player_values.REFRESH_RATE)
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
