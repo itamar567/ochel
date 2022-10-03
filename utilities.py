@@ -111,7 +111,7 @@ def get_weakness_element(entity, default):
     element = default
     resist = entity.resists.get(default, 0)
     for elem in entity.resists.keys():
-        if elem in ("immobility", "health", "shrink"):
+        if elem in ("immobility", "health", "shrink", "all"):
             continue
         if entity.resists[elem] < resist:
             element = elem
