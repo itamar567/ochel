@@ -472,7 +472,7 @@ class Match:
         self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame)
         self.inv_gear_list.pack(side=tkinter.TOP)
         self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
-        for index, slot in enumerate(constants.INVENTORY_SLOTS):
+        for slot in constants.INVENTORY_SLOTS:
             button_img = tkinter.PhotoImage(master=upper_frame, file=f"images/inv_icons/{slot}.png")
             button = tkinter.Button(master=upper_frame, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python

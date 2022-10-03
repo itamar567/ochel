@@ -273,7 +273,14 @@ class Entity:
         self.dmg_type = utilities.determine_damage_type_by_stats(self)
         self.stunned = False
         self.dot_multiplier = min(1 + self.stats.DEX / 400, 2)  # DEX DoT multiplier caps at +100%
-        self.on_hit_special = constants.DEFAULT_ON_HIT_SPECIAL
+
+        self.on_hit_special_func = None
+        self.on_hit_special_chance = 0
+        self.on_hit_special_apply_time = constants.ON_HIT_APPLY_AFTER_HIT
+        self.on_hit_special_apply_next_turn = False  # If True, the on-hit special will automatically apply the next turn, even if the entity is stunned
+        self.on_hit_special_apply_next_turn_entity = None
+        self.on_hit_special_apply_next_turn_damage = None
+        self.on_hit_special_messages = []
 
         # Can be used by the entity to store the effects that it can apply/inflict
         self.available_effects = types.SimpleNamespace()
@@ -369,6 +376,9 @@ Effects:"""
 
             if mpm_roll <= 0:
                 self.match.update_main_log(f"{self.name} missed {entity.name}", f"{entity.tag_prefix}_missed")
+                self.element = old_element
+                if return_damage:
+                    return constants.ATTACK_CODE_UNSUCCESSFUL, 0
                 return constants.ATTACK_CODE_UNSUCCESSFUL
 
             bpd_type = utilities.dmg_type_2_bpd(self.dmg_type)
@@ -391,13 +401,9 @@ Effects:"""
             damage += damage_additive
             damage *= damage_multiplier
 
-        damage = self.on_hit_special(self.match, entity, damage)
-
         crit_chance = (self.bonuses["crit"] / 200)
         crit = False
         if utilities.chance(crit_chance):
-            if not glancing:
-                damage *= self.bonuses["crit_multiplier"] + self.stats.INT / 1000
             crit = True
 
         damage = max(damage * (1 + self.bonuses.get("boost", 0) / 100), 0)
@@ -405,24 +411,38 @@ Effects:"""
 
         if glancing:
             if crit:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, glancing=True, crit=True, inflicts=inflicts, mana_attack=mana_attack)
+                damage *= (1 + self.stats.STR / 1000)
             else:
-                damage_dealt = entity.attacked(damage * 0.1, self.element, self, glancing=True, inflicts=inflicts, mana_attack=mana_attack)
+                damage *= 0.1
         else:
             if crit:
-                damage_dealt = entity.attacked(damage, self.element, self, crit=True, inflicts=inflicts, mana_attack=mana_attack)
+                damage *= self.bonuses["crit_multiplier"] + self.stats.INT / 1000
             else:
-                damage_dealt = entity.attacked(damage * (1 + self.stats.STR / 1000), self.element, self, inflicts=inflicts, mana_attack=mana_attack)
+                damage *= (1 + self.stats.STR / 1000)
 
-            self.on_hit_special(self.match, entity, damage)
-            self.element = old_element
-            if return_damage:
-                return constants.ATTACK_CODE_SUCCESS, damage_dealt
-            return constants.ATTACK_CODE_SUCCESS
+        on_hit_special = False
+        if not glancing and utilities.chance(self.on_hit_special_chance):
+            on_hit_special = True
+            for message in self.on_hit_special_messages:
+                self.match.update_main_log(message, "p_comment")
+            if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_BEFORE_HIT:
+                damage = self.on_hit_special_func(self.match, entity, damage)
+            if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_NEXT_TURN:
+                self.on_hit_special_apply_next_turn = True
+                self.on_hit_special_apply_next_turn_entity = entity
+                self.on_hit_special_apply_next_turn_damage = damage
+
+        damage_dealt = entity.attacked(damage, self.element, self, inflicts=inflicts, mana_attack=mana_attack)
+
+        if on_hit_special and self.on_hit_special_apply_time == constants.ON_HIT_APPLY_AFTER_HIT:
+            self.on_hit_special_func(self.match, entity, damage)
+
         self.element = old_element
+
+        attack_code = constants.ATTACK_CODE_UNSUCCESSFUL if glancing else constants.ATTACK_CODE_SUCCESS
         if return_damage:
-            return constants.ATTACK_CODE_UNSUCCESSFUL, damage_dealt
-        return constants.ATTACK_CODE_UNSUCCESSFUL
+            return attack_code, damage_dealt
+        return attack_code
 
     def attack_with_bonus(self, bonuses, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False, element=None, can_miss=True, return_damage=False, inflicts=[]):
         """
@@ -656,6 +676,12 @@ Effects:"""
             if effect.dot is not None:
                 self.take_dot_damage(effect)
 
+        if self.on_hit_special_apply_next_turn:
+            self.on_hit_special_func(self.match, self.on_hit_special_apply_next_turn_entity, self.on_hit_special_apply_next_turn_damage)
+            self.on_hit_special_apply_next_turn = False
+            self.on_hit_special_apply_next_turn_entity = None
+            self.on_hit_special_apply_next_turn_damage = None
+
     def update_rollback_data(self):
         """
         Updates rollback data.
@@ -742,7 +768,7 @@ class Player(Entity):
         self.skill_images = {}
         self.skill_names = {}
 
-        self.on_attack_special = constants.DEFAULT_ON_ATTACK_SPECIAL
+        self.on_attack_special_func = None
         self.on_attack_special_chance = 0
 
         # Some armors use an extra button (e.g. ChW for soulthreads)
@@ -782,11 +808,6 @@ class Player(Entity):
 
         if slot == constants.SLOT_PET and self.match.pet == item:
             return
-        if slot == constants.SLOT_WEAPON_SPECIAL \
-                and self.on_hit_special == item.on_hit_special\
-                and self.on_attack_special == item.on_attack_special \
-                and self.on_attack_special_chance == item.on_attack_special_chance:
-            return
         if self.gear.get(slot, None) == item:
             return
         self.unequip(slot, ignore_default_item=True, update_details=False)
@@ -798,9 +819,12 @@ class Player(Entity):
         self.gear_identifiers.add(item.identifier)
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
-            self.on_hit_special = item.on_hit_special
-            self.on_attack_special = item.on_attack_special
-            self.on_attack_special_chance = item.on_attack_special_chance
+            self.on_hit_special_func = item.on_hit_func
+            self.on_hit_special_chance = item.on_hit_chance
+            self.on_hit_special_apply_time = item.on_hit_apply_time
+            self.on_hit_special_messages = item.on_hit_messages
+            self.on_attack_special_func = item.on_attack_func
+            self.on_attack_special_chance = item.on_attack_chance
             return
 
         if slot == constants.SLOT_WEAPON:
@@ -865,7 +889,13 @@ class Player(Entity):
         self.gear_identifiers.remove(item.identifier)
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
-            self.on_hit_special = constants.DEFAULT_ON_HIT_SPECIAL
+            self.on_hit_special_func = None
+            self.on_hit_special_apply_time = None
+            self.on_hit_special_chance = 0
+            self.on_hit_special_messages = []
+            self.on_attack_special_func = None
+            self.on_attack_special_chance = 0
+            return
 
         for elem in item.resists.keys():
             old_gear_resist = self.gear_resists[elem]
@@ -925,7 +955,7 @@ class Player(Entity):
 
     def skill_attack(self):
         if utilities.chance(self.on_attack_special_chance):
-            self.on_attack_special(self.match)
+            self.on_attack_special_func(self.match)
             return constants.RETURN_CODE_USED_ON_ATTACK_SPECIAL
 
     def update_rollback_data(self):

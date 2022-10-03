@@ -4,6 +4,7 @@ import glob
 import sys
 
 import constants
+from gear.weapon_specials import weapon_specials
 
 
 class Item:
@@ -38,16 +39,11 @@ class Trinket(Item):
 
 
 class Weapon(Item):
-    def __init__(self, name, identifier, dmg_type, element, min_damage, max_damage, bonuses, resists, default=False,
-                 on_hit_special=constants.DEFAULT_ON_HIT_SPECIAL,
-                 on_attack_special=None, on_attack_special_chance=0):
+    def __init__(self, name, identifier, dmg_type, element, min_damage, max_damage, bonuses, resists, default=False):
         super().__init__(name, identifier, bonuses, resists, default=default)
         self.damage = (min_damage, max_damage)
         self.dmg_type = dmg_type
         self.element = element
-        self.on_hit_special = on_hit_special
-        self.on_attack_special = on_attack_special
-        self.on_attack_special_chance = on_attack_special_chance
 
 
 class Gear:
@@ -75,8 +71,11 @@ class Gear:
         Loads an item using its slot and identifier
         :param slot: The item's slot
         :param identifier: The item's identifier
-        :return: A misc.Item/misc.Weapon object, depends on the item's slot
+        :return: A misc.Item/misc.Weapon/weapon_specials.WeaponSpecial object, depends on the item's slot
         """
+
+        if slot == constants.SLOT_WEAPON_SPECIAL:
+            return weapon_specials[identifier]
 
         return Gear.load_item_using_path(slot, f"{Gear.path}/{slot}/{identifier}.json")
 
@@ -106,6 +105,9 @@ class Gear:
 
     @staticmethod
     def get_gear_list(slot):
+        if slot == constants.SLOT_WEAPON_SPECIAL:
+            return list(weapon_specials.values())
+
         gear_list = []
 
         for item_path in sorted(glob.glob(f"{Gear.path}/{slot}/*.json")):
@@ -121,6 +123,8 @@ class Gear:
         build_string = json.load(open(f"{Gear.path}/builds/{build_index}.json", "r"))
         build = {}
         for slot in build_string.keys():
+            if slot == constants.SLOT_WEAPON_SPECIAL:
+                build[slot] = weapon_specials[build_string[slot]]
             build[slot] = Gear.load_item(slot, build_string[slot])
         return build
 
