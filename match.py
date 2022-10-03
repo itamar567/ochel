@@ -1,4 +1,6 @@
+import json
 import math
+import os.path
 import time
 import tkinter
 from tkinter import ttk, scrolledtext
@@ -375,12 +377,35 @@ class Match:
         self.window.title("Insert Stats")
         player_stats = None
         pet_stats = None
+        stats_dir_path = f"{Gear.path}/data"
+        stats_file_path = f"{stats_dir_path}/stats.json"
 
         def button_clicked(event):
             nonlocal player_stats
             nonlocal pet_stats
-            player_stats = classes.MainStats([int(stat_entry.get()) for stat_entry in player_stats_entries])
-            pet_stats = classes.PetStats([int(stat_entry.get()) for stat_entry in pet_stats_entries])
+            nonlocal stats_dir_path
+            nonlocal stats_file_path
+
+            player_stats_list = [int(stat_entry.get()) for stat_entry in player_stats_entries]
+            pet_stats_list = [int(stat_entry.get()) for stat_entry in pet_stats_entries]
+
+            # Save stats
+            stats_dict = {"player": player_stats_list, "pet": pet_stats_list}
+            if not os.path.exists(stats_dir_path):
+                os.mkdir(stats_dir_path)
+            json.dump(stats_dict, open(stats_file_path, "w"))
+
+            player_stats = classes.MainStats(player_stats_list)
+            pet_stats = classes.PetStats(pet_stats_list)
+
+
+        if os.path.exists(stats_file_path):
+            saved_stats_dict = json.load(open(stats_file_path, "r"))
+            saved_player_stats_list = saved_stats_dict["player"]
+            saved_pet_stats_list = saved_stats_dict["pet"]
+        else:
+            saved_player_stats_list = [0] * 7
+            saved_pet_stats_list = [0] * 5
 
         current_row_index = 0
 
@@ -389,11 +414,11 @@ class Match:
         current_row_index += 1
         player_stats_entries = []
 
-        for stat in ("STR", "DEX", "INT", "CHA", "LUK", "END", "WIS"):
+        for index, stat in enumerate(("STR", "DEX", "INT", "CHA", "LUK", "END", "WIS")):
             current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
             current_stat_label.grid(row=current_row_index, column=0, padx=5)
             current_stat_entry = tkinter.Entry(master=self.window)
-            current_stat_entry.insert("end", "0")
+            current_stat_entry.insert("end", str(saved_player_stats_list[index]))
             current_stat_entry.grid(row=current_row_index, column=1, padx=5)
             player_stats_entries.append(current_stat_entry)
             current_row_index += 1
@@ -407,11 +432,11 @@ class Match:
         current_row_index += 1
         pet_stats_entries = []
 
-        for stat in ("protection", "magic", "fighting", "assistance", "mischief"):
+        for index, stat in enumerate(("protection", "magic", "fighting", "assistance", "mischief")):
             current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
             current_stat_label.grid(row=current_row_index, column=0, padx=5)
             current_stat_entry = tkinter.Entry(master=self.window)
-            current_stat_entry.insert("end", "0")
+            current_stat_entry.insert("end", str(saved_pet_stats_list[index]))
             current_stat_entry.grid(row=current_row_index, column=1, padx=5)
             pet_stats_entries.append(current_stat_entry)
             current_row_index += 1
