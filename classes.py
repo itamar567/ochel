@@ -177,7 +177,7 @@ class Pet:
             if crit:
                 entity.attacked(damage, self.element, self, glancing=True, crit=True)
             else:
-                entity.attacked(damage * 0.1, self.element, self, glancing=True)
+                entity.attacked(damage * 0.05, self.element, self, glancing=True)
         else:
             if crit:
                 entity.attacked(damage, self.element, self, crit=True)
@@ -409,16 +409,12 @@ Effects:"""
         damage = max(damage * (1 + self.bonuses.get("boost", 0) / 100), 0)
         damage *= (1 + self.stats.DEX / 4000)
 
-        if glancing:
-            if crit:
-                damage *= (1 + self.stats.STR / 1000)
-            else:
-                damage *= 0.1
+        if crit and not glancing:
+            damage *= self.bonuses["crit_multiplier"] + self.stats.INT / 1000
         else:
-            if crit:
-                damage *= self.bonuses["crit_multiplier"] + self.stats.INT / 1000
-            else:
-                damage *= (1 + self.stats.STR / 1000)
+            damage *= (1 + self.stats.STR / 1000)
+            if glancing:
+                damage *= 0.05
 
         on_hit_special = False
         if not glancing and utilities.chance(self.on_hit_special_chance):
@@ -432,7 +428,7 @@ Effects:"""
                 self.on_hit_special_apply_next_turn_entity = entity
                 self.on_hit_special_apply_next_turn_damage = damage
 
-        damage_dealt = entity.attacked(damage, self.element, self, inflicts=inflicts, mana_attack=mana_attack)
+        damage_dealt = entity.attacked(damage, self.element, self, inflicts=inflicts, mana_attack=mana_attack, glancing=glancing, crit=crit)
 
         if on_hit_special and self.on_hit_special_apply_time == constants.ON_HIT_APPLY_AFTER_HIT:
             self.on_hit_special_func(self.match, entity, damage)
