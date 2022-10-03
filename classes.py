@@ -602,7 +602,7 @@ Effects:"""
         for eff in self.effects:
             if effect == eff:
                 already_applied = True
-                self.remove_effect(effect)
+                self.remove_effect(eff)
                 break
 
         if effect.stun is True:
