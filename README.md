@@ -2,7 +2,7 @@
 OCHEL is a Python program that imitates DragonFable fights and provides an easier and faster way to create boss fights strategies and calculations.
 
 ## Features
-OCHEL currently supports all game mechanics except for on-hit specials and pet switching.
+OCHEL currently supports all game mechanics except for pet switching.
 
 ## Classes
 Currently implemented classes:
@@ -17,9 +17,22 @@ Currently implemented enemies:
 - Oratath
 
 ## Gear
-Currently, no trinkets/special weapons are supported, and the only supported pet is the kid dragon.
+Currently, the only supported pet is the kid dragon.
 You can add your own gear (except trinkets/special weapons/pets) using the inventory after starting a match.
 The gear you added will be saved, and you will be able to use it in future matches.
+
+### Weapon Specials:
+Currently implemented weapon specials:
+
+- Ice Scythe
+- Blade of Destiny (Level 80)
+- Blade of Destiny (Level 90)
+
+### Trinkets:
+Currently implemented trinkets:
+
+- The Corrupted Seven
+- Elemental Unity Defender XV
 
 ## Getting Started
 OCHEL is currently in pre-alpha, and therefore I do not suggest using it for damage calculations at the current state.
@@ -30,9 +43,9 @@ Make sure you have Python 3 installed.
 #### Cloning the repository
 Click the green Code button above the file list, then click Download ZIP and unzip the downloaded file.
 
-#### Configuring stats
+#### Configuring
 Edit `player_values.py` and configure the variables.
-I plan on adding a user-friendly way of configuring the program in the future.
+I plan on adding a user-friendly way of changing the dragon kid's element.
 
 #### Running the program
 Double-click `main.py` to run the program.
