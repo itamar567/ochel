@@ -67,6 +67,8 @@ class AddItemWindow:
         self.resists_entry = None
 
         for index, slot in enumerate(constants.INVENTORY_SLOTS):
+            if slot == constants.SLOT_WEAPON_SPECIAL:
+                continue
             button_img = tkinter.PhotoImage(master=self.window, file=f"images/inv_icons/{slot}.png")
             button = tkinter.Button(master=self.window, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
