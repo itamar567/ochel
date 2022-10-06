@@ -1120,6 +1120,7 @@ class Match:
         self.update_pet_cooldowns(reduce_cooldowns=False)
         self.update_player_skill_buttons()
         self.update_pet_skill_buttons()
+        self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         self.update_detail_windows()
         if self.current_turn == 1:
             self.buttons["Back"][0]["state"] = "disabled"
