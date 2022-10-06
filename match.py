@@ -248,7 +248,9 @@ class Match:
         self.player = self.choose_armor()
         self.enemies = self.choose_enemies()
         self.enemies_alive = self.enemies.copy()
+        self.rollback_enemies_alive = [self.enemies_alive.copy()]
         self.targeted_enemy = self.enemies_alive[0]
+        self.rollback_targeted_enemy = [self.targeted_enemy]
         self.entities = self.enemies.copy()
         self.entities.append(self.player)
         for entity in self.entities:
@@ -332,7 +334,7 @@ class Match:
             self.choose_targeted_enemy_window = tkinter.Tk()
             self.choose_targeted_enemy_buttons = []
             self.setup_choose_targeted_enemy_window()
-            self.choose_targeted_enemy_buttons[0]["state"] = "disabled"
+            self.update_targeted_enemy_buttons()
 
         # Setup entities windows
         self.entities_windows = []
@@ -596,10 +598,24 @@ class Match:
     def switch_targeted_enemy(self, button, update_log=True):
         enemy_index = self.name_to_enemies_index[button["text"]]
         self.targeted_enemy = self.enemies[enemy_index]
-        for btn in self.choose_targeted_enemy_buttons:
-            btn["state"] = "normal"
-        button["state"] = "disabled"
+        self.update_targeted_enemy_buttons()
         self.update_rotation_log(f"Target {self.enemies[enemy_index].name}", double_turn=True)
+
+    def update_targeted_enemy_buttons(self):
+        if len(self.enemies) == 1:
+            return
+
+        for index, btn in enumerate(self.choose_targeted_enemy_buttons):
+            if self.enemies[index].hp == 0:
+                btn["state"] = "disabled"
+            else:
+                btn["state"] = "normal"
+            if self.enemies[index] is self.targeted_enemy and self.enemies[index].hp > 0:
+                btn["bg"] = "blue"
+                btn["fg"] = "white"
+            else:
+                btn["bg"] = "white"
+                btn["fg"] = "black"
 
     def setup_choose_targeted_enemy_window(self):
         """
@@ -1048,6 +1064,9 @@ class Match:
             self.update_main_log(f"{self.player.name} is immobilized", "p_comment")
         for entity in self.entities:
             entity.update_rollback_data()
+        self.rollback_targeted_enemy.append(self.targeted_enemy)
+        self.rollback_enemies_alive.append(self.enemies_alive)
+        self.update_targeted_enemy_buttons()
         self.update_detail_windows()
 
     def end_match(self):
@@ -1064,7 +1083,6 @@ class Match:
             self.end_match()
             return
         self.switch_targeted_enemy(self.choose_targeted_enemy_buttons[self.name_to_enemies_index[self.enemies_alive[0].name]], update_log=False)
-        self.choose_targeted_enemy_buttons[self.name_to_enemies_index[entity.name]]["state"] = "disabled"
 
     def update_match_after_double_turn(self):
         """
@@ -1093,6 +1111,11 @@ class Match:
             entity.rollback()
         self.pet.rollback()
 
+        self.targeted_enemy = self.rollback_targeted_enemy[-2]
+        self.rollback_targeted_enemy.pop()
+        self.enemies_alive = self.rollback_enemies_alive[-2].copy()
+        self.rollback_enemies_alive.pop()
+        self.update_targeted_enemy_buttons()
         self.update_player_cooldowns(reduce_cooldowns=False)
         self.update_pet_cooldowns(reduce_cooldowns=False)
         self.update_player_skill_buttons()
