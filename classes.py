@@ -767,6 +767,8 @@ class Player(Entity):
         self.on_attack_special_func = None
         self.on_attack_special_chance = 0
 
+        self.food_used = {}
+
         # Some armors use an extra button (e.g. ChW for soulthreads)
         self.extra_window = None
 
@@ -779,6 +781,7 @@ class Player(Entity):
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
+        self.rollback_food_used = [self.food_used.copy()]
 
         # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
         self.hp = self.max_hp
@@ -964,6 +967,7 @@ class Player(Entity):
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_hp_potion_count.append(self.hp_potion_count)
         self.rollback_mp_potion_count.append(self.mp_potion_count)
+        self.rollback_food_used.append(self.food_used.copy())
 
     def use_skill_button_onclick(self, event, attack_name=None):
         """
@@ -1080,6 +1084,8 @@ class Player(Entity):
         self.rollback_hp_potion_count.pop()
         self.mp_potion_count = self.rollback_mp_potion_count[-2]
         self.rollback_mp_potion_count.pop()
+        self.food_used = self.rollback_food_used[-2]
+        self.rollback_food_used.pop()
 
 
 class Enemy(Entity):

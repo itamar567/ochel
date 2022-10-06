@@ -1,11 +1,22 @@
 import random
+import math
 
 
 class Food:
-    def __init__(self, name, stuffed_duration, use_function):
+    def __init__(self, name, identifier, stuffed_duration, use_function=None, effect=None, max_uses=math.inf):
         self.name = name
+        self.identifier = identifier
         self.stuffed_duration = stuffed_duration
         self.use_function = use_function
+        self.effect = effect
+        self.max_uses = max_uses
+
+    def use(self, match):
+        if self.effect is not None:
+            match.player.add_effect(self.effect)
+        if self.use_function is not None:
+            self.use_function(match)
+        match.update_detail_windows()
 
 
 class Retaliation:

@@ -11,6 +11,8 @@ import match_constants
 import misc
 import pets
 import player_values
+import food
+import utilities
 from gear.gear import Gear, Item, Weapon
 from gear.trinkets import trinkets
 
@@ -266,7 +268,6 @@ class Match:
         self.setup_window_player()
 
         # Setup food window
-        self.food_by_name = {}
         self.food_window = tkinter.Tk()
         self.food_window.title("Food")
         self.setup_window_food()
@@ -804,11 +805,13 @@ class Match:
 
         if event.widget["state"] == "disabled":
             return
-        food = self.food_by_name[event.widget["text"]]
-        self.player.add_effect(misc.Effect("Stuffed", "food_stuffed", food.stuffed_duration, {}, {}))
-        food.use_function(self)
+        self.player.add_effect(misc.Effect("Stuffed", "food_stuffed", event.widget.food.stuffed_duration, {}, {}))
+        event.widget.food.use(self)
+        utilities.add_value(self.player.food_used, event.widget.food.identifier, 1)
+        if event.widget.food.max_uses - self.player.food_used[event.widget.food.identifier] == 0:
+            event.widget["state"] = "disabled"
         self.disable_food_buttons()
-        self.update_rotation_log(food.name, double_turn=True)
+        self.update_rotation_log(event.widget.food.name, double_turn=True)
         self.update_detail_windows()
 
     def setup_window_food(self):
@@ -816,12 +819,12 @@ class Match:
         Setups the food window.
         """
 
-        for food in match_constants.FOOD_LIST:
-            self.food_by_name[food.name] = food
-            button = tkinter.Button(master=self.food_window, text=food.name)
+        for current_food in food.food_dict.values():
+            button = tkinter.Button(master=self.food_window, text=current_food.name)
+            button.food = current_food
             button.bind("<Button-1>", self.use_food_button_onclick)
             button.pack()
-            self.food_buttons[food.name] = button
+            self.food_buttons[current_food.identifier] = button
 
     def disable_food_buttons(self):
         """
@@ -837,7 +840,10 @@ class Match:
         """
 
         for button in self.food_buttons.values():
-            button["state"] = "normal"
+            if button.food.max_uses - self.player.food_used.get(button.food.identifier, 0) == 0:
+                button["state"] = "disabled"
+            else:
+                button["state"] = "normal"
 
     def setup_window_player(self):
         """
@@ -1104,6 +1110,10 @@ class Match:
         self.rotation_log_widget.insert("1.0", log)
         self.rotation_log_widget.configure(state="disabled")
         self.rotation_log_widget.see("end")
+        if utilities.stuffed(self.player):
+            self.disable_food_buttons()
+        else:
+            self.enable_food_buttons()
         self.update_main_log(f"{self.player.name} undoes their last move", "p_comment")
 
     def export(self):

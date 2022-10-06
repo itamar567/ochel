@@ -117,3 +117,10 @@ def get_weakness_element(entity, default):
             element = elem
             resist = entity.resists[elem]
     return element
+
+
+def stuffed(player):
+    for effect in player.effects:
+        if effect.identifier == "food_stuffed":
+            return True
+    return False
