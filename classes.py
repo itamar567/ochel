@@ -775,17 +775,21 @@ class Player(Entity):
         for slot in gear.keys():
             self.equip(slot, gear[slot], update_details=False)
 
+        # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
+        self.hp = self.max_hp
+        self.mp = self.max_mp
+
         # Rollback data
+        self.rollback_bonuses = [self.bonuses.copy()]
+        self.rollback_resists = [self.resists.copy()]
+        self.rollback_hp = [self.hp]
+        self.rollback_mp = [self.mp]
         self.rollback_gear = [self.gear.copy()]
         self.rollback_cooldown = [self.active_cooldowns.copy()]
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
         self.rollback_food_used = [self.food_used.copy()]
-
-        # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
-        self.hp = self.max_hp
-        self.mp = self.max_mp
 
     def recalculate_bonuses(self, old_stats):
         """
