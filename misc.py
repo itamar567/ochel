@@ -41,7 +41,7 @@ class Retaliation:
 
 
 class DoT:
-    def __init__(self, dmg_min, dmg_max, element, entity):
+    def __init__(self, dmg_min, dmg_max, element, entity, mana=False):
         """
         :param dmg_min: The minimum damage the DoT can do
         :param dmg_max: The maximum damage the DoT can do
@@ -52,6 +52,7 @@ class DoT:
         self.dmg_max = dmg_max
         self.element = element
         self.entity = entity
+        self.mana = mana
 
     def get_damage(self):
         return random.randint(self.dmg_min, self.dmg_max)

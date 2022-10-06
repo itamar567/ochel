@@ -659,7 +659,7 @@ Effects:"""
         """
 
         self.attacked(random.randint(math.floor(effect.dot.dmg_min), math.floor(effect.dot.dmg_max)),
-                      effect.dot.element, effect.dot.entity, dot=True)
+                      effect.dot.element, effect.dot.entity, dot=True, mana_attack=effect.dot.mana)
 
     def next(self):
         """
