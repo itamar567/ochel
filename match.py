@@ -3,7 +3,7 @@ import math
 import os.path
 import time
 import tkinter
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, font
 
 import classes
 import constants
@@ -243,10 +243,15 @@ class Match:
         self.pet_buttons = {}
         self.food_buttons = {}
 
-        # Setup enemies and player
+        # Setup window
         self.window = tkinter.Tk()
         self.style = ttk.Style()
         self.style.theme_use(constants.THEME)
+        font.nametofont("TkDefaultFont").configure(family=constants.FONT_FAMILY, size=constants.FONT_SIZE)
+        font.nametofont("TkTextFont").configure(family=constants.FONT_FAMILY, size=constants.FONT_SIZE)
+        font.nametofont("TkFixedFont").configure(family=constants.FONT_FAMILY, size=constants.FONT_SIZE)
+
+        # Setup enemies and player
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
         self.stats, self.pet_stats, self.trinket, self.player, self.enemies = self.choose_match_data()
         self.enemies_alive = self.enemies.copy()
@@ -276,11 +281,6 @@ class Match:
         self.food_window.title("Food")
         self.setup_window_food()
 
-        # Setup log windows
-        self.log_window = tkinter.Toplevel()
-        self.log_window.title("Log")
-        self.main_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
-
         # Setup inventory window
         self.inv_window = tkinter.Toplevel()
         self.inv_buttons = []
@@ -292,6 +292,16 @@ class Match:
         self.current_inv_slot_list = None
         self.builds = Gear.get_all_builds()
         self.setup_inv_window()
+
+        # Setup log window
+        self.log_window = tkinter.Toplevel()
+        self.log_window.title("Log")
+
+        self.main_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window, state="disabled", width=50, height=25)
+        self.main_log_widget.pack()
+
+        self.rotation_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window, state="disabled", width=50, height=10)
+        self.rotation_log_widget.pack()
 
         # Log color config
         # if the tag stats with 'p_', the tag is related to the player
@@ -323,12 +333,6 @@ class Match:
         self.main_log_widget.tag_config("e_attacked_crit_glance", foreground="cyan")
         self.main_log_widget.tag_config("default", foreground="black")
 
-        self.main_log_widget.configure(state="disabled")
-        self.main_log_widget.pack()
-        self.rotation_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
-        self.rotation_log_widget.configure(state="disabled")
-        self.rotation_log_widget.pack()
-
         # Setup the window for choosing a targeted enemy
         self.choose_targeted_enemy_window = None
         if len(self.enemies) > 1:
@@ -344,17 +348,18 @@ class Match:
             self.entities_windows.append(DetailWindow(entity))
         self.update_player_skill_buttons()
 
+        self.window_list = [self.window, self.log_window, self.food_window, self.inv_window]
+        for detail_window in self.entities_windows:
+            self.window_list.append(detail_window.window)
+        if self.player.extra_window is not None:
+            self.window_list.append(self.player.extra_window)
+        if self.choose_targeted_enemy_window is not None:
+            self.window_list.append(self.choose_targeted_enemy_window)
+
         while True:
-            self.window.update()
-            for window in self.entities_windows:
-                window.update()
-            self.log_window.update()
-            self.food_window.update()
-            self.inv_window.update()
-            if self.player.extra_window is not None:
-                self.player.extra_window.update()
-            if self.choose_targeted_enemy_window is not None:
-                self.choose_targeted_enemy_window.update()
+            for window in self.window_list:
+                if window.state() == "normal":
+                    window.update()
             time.sleep(player_values.REFRESH_RATE)
 
     def choose_match_data(self):
@@ -464,7 +469,7 @@ class Match:
         trinkets_label.grid(row=0, column=0, sticky=tkinter.W)
 
         for index, trinket in enumerate(trinkets.values()):
-            button = tkinter.Radiobutton(master=trinkets_frame, text=trinket.name, variable=trinket_id_var, value=trinket.identifier)
+            button = tkinter.Radiobutton(master=trinkets_frame, text=trinket.name, variable=trinket_id_var, value=trinket.identifier, indicatoron=False)
             button.grid(row=1, column=index, padx=5, sticky=tkinter.W)
 
         # Newline
@@ -478,7 +483,7 @@ class Match:
         armors_label.grid(row=0, column=0, sticky=tkinter.W)
 
         for i in range(len(match_constants.PLAYER_ARMOR_LIST)):
-            button = tkinter.Radiobutton(master=armors_frame, text=match_constants.PLAYER_ARMOR_LIST[i][0], variable=armor_index_var, value=i)
+            button = tkinter.Radiobutton(master=armors_frame, text=match_constants.PLAYER_ARMOR_LIST[i][0], variable=armor_index_var, value=i, indicatoron=False)
             button.grid(row=1, column=i, padx=5, sticky=tkinter.W)
 
         # Newline
@@ -492,7 +497,7 @@ class Match:
         challenges_label.grid(row=0, column=0, sticky=tkinter.W)
 
         for i in range(len(match_constants.ENEMIES_LIST)):
-            button = tkinter.Radiobutton(master=challenges_frame, text=match_constants.ENEMIES_LIST[i][0], variable=challenge_index_var, value=i)
+            button = tkinter.Radiobutton(master=challenges_frame, text=match_constants.ENEMIES_LIST[i][0], variable=challenge_index_var, value=i, indicatoron=False)
             button.grid(row=1, column=i, padx=5, sticky=tkinter.W)
 
         # Newline
@@ -525,7 +530,7 @@ class Match:
         self.inv_window.title("Inventory")
         upper_frame = tkinter.Frame(master=self.inv_window)
         upper_frame.pack(side=tkinter.TOP)
-        self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame)
+        self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame, width=50, height=20)
         self.inv_gear_list.pack(side=tkinter.TOP)
         self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
         for slot in constants.INVENTORY_SLOTS:
