@@ -283,7 +283,7 @@ class Match:
 
         # Setup inventory window
         self.inv_window = tkinter.Toplevel()
-        self.inv_buttons = []
+        self.inv_buttons = {}
         self.inv_build_load_button = None
         self.inv_gear_list = None
         self.build_entry = None
@@ -522,9 +522,19 @@ class Match:
             return
         if event.widget.equipped:
             self.player.unequip(event.widget.slot)
+            event.widget.equipped = False
+            event.widget["text"] = "Equip"
         else:
+            old_item = self.player.gear.get(event.widget.slot, None)
+            if old_item is not None:
+                old_item_button = self.inv_buttons.get(old_item.identifier, None)
+                if old_item_button is not None:
+                    old_item_button["text"] = "Equip"
+                    old_item_button.equipped = False
+
             self.player.equip(event.widget.slot, event.widget.item)
-        self.refresh_inv_window()
+            event.widget.equipped = True
+            event.widget["text"] = "Unequip"
 
     def setup_inv_window(self):
         self.inv_window.title("Inventory")
@@ -607,7 +617,7 @@ class Match:
         self.current_inv_slot_list = slot_list
         self.inv_gear_list.configure(state="normal")
         self.inv_gear_list.delete("1.0", "end")
-        self.inv_buttons = []
+        self.inv_buttons = {}
         for index in range(len(item_list)):
             if item_list[index].identifier in self.player.gear_identifiers:
                 text = "Unequip"
@@ -622,7 +632,7 @@ class Match:
             button.bind("<Button-1>", self.equip_item_onclick)
             if self.inv_buttons_disabled:
                 button["state"] = "disabled"
-            self.inv_buttons.append(button)
+            self.inv_buttons[item_list[index].identifier] = button
             self.inv_gear_list.insert("end", f"{item_list[index].name} ")
             self.inv_gear_list.window_create("end", window=button)
             self.inv_gear_list.insert("end", "\n")
@@ -636,13 +646,13 @@ class Match:
 
     def disable_inventory_buttons(self):
         self.inv_buttons_disabled = True
-        for button in self.inv_buttons:
+        for button in self.inv_buttons.values():
             button["state"] = "disabled"
         self.inv_build_load_button["state"] = "disabled"
 
     def enable_inventory_buttons(self):
         self.inv_buttons_disabled = False
-        for button in self.inv_buttons:
+        for button in self.inv_buttons.values():
             button["state"] = "normal"
         self.inv_build_load_button["state"] = "normal"
 
