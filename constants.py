@@ -48,3 +48,5 @@ ON_HIT_APPLY_BEFORE_HIT = "before_hit"
 ON_HIT_APPLY_AFTER_HIT = "after_hit"
 ON_HIT_APPLY_NEXT_TURN = "next_turn"
 RETURN_CODE_USED_ON_ATTACK_SPECIAL = 5
+
+THEME = "default"

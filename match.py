@@ -20,7 +20,7 @@ from gear.trinkets import trinkets
 class DetailWindow:
     def __init__(self, entity):
         self.entity = entity
-        self.window = tkinter.Tk()
+        self.window = tkinter.Toplevel()
         self.window.title(entity.name)
 
         progress_bars_frame = tkinter.Frame(master=self.window)
@@ -58,7 +58,7 @@ class DetailWindow:
 class AddItemWindow:
     def __init__(self, match):
         self.match = match
-        self.window = tkinter.Tk()
+        self.window = tkinter.Toplevel()
         self.window.title("Choose Item Type")
 
         self.dmg_type = None
@@ -245,6 +245,8 @@ class Match:
 
         # Setup enemies and player
         self.window = tkinter.Tk()
+        self.style = ttk.Style()
+        self.style.theme_use(constants.THEME)
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
         self.stats, self.pet_stats, self.trinket, self.player, self.enemies = self.choose_match_data()
         self.enemies_alive = self.enemies.copy()
@@ -270,17 +272,17 @@ class Match:
         self.setup_window_player()
 
         # Setup food window
-        self.food_window = tkinter.Tk()
+        self.food_window = tkinter.Toplevel()
         self.food_window.title("Food")
         self.setup_window_food()
 
         # Setup log windows
-        self.log_window = tkinter.Tk()
+        self.log_window = tkinter.Toplevel()
         self.log_window.title("Log")
         self.main_log_widget = tkinter.scrolledtext.ScrolledText(master=self.log_window)
 
         # Setup inventory window
-        self.inv_window = tkinter.Tk()
+        self.inv_window = tkinter.Toplevel()
         self.inv_buttons = []
         self.inv_build_load_button = None
         self.inv_gear_list = None
@@ -331,7 +333,7 @@ class Match:
         self.choose_targeted_enemy_window = None
         if len(self.enemies) > 1:
             self.name_to_enemies_index = {self.enemies[i].name: i for i in range(len(self.enemies))}
-            self.choose_targeted_enemy_window = tkinter.Tk()
+            self.choose_targeted_enemy_window = tkinter.Toplevel()
             self.choose_targeted_enemy_buttons = []
             self.setup_choose_targeted_enemy_window()
             self.update_targeted_enemy_buttons()
@@ -739,6 +741,8 @@ class Match:
         """
 
         for widget in self.window.children.values():
+            if isinstance(widget, tkinter.Toplevel):
+                continue
             widget.grid_remove()
 
     def update_effects(self):
@@ -1148,7 +1152,7 @@ class Match:
         return text
 
     def export_onclick(self, event):
-        window = tkinter.Tk()
+        window = tkinter.Toplevel()
         window.title("Exported match")
         scrolled_text = tkinter.scrolledtext.ScrolledText(master=window)
         scrolled_text.insert("1.0", self.export())
