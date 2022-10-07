@@ -246,10 +246,7 @@ class Match:
         # Setup enemies and player
         self.window = tkinter.Tk()
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
-        self.stats, self.pet_stats = self.choose_stats()
-        self.trinket = self.choose_trinket()
-        self.player = self.choose_armor()
-        self.enemies = self.choose_enemies()
+        self.stats, self.pet_stats, self.trinket, self.player, self.enemies = self.choose_match_data()
         self.enemies_alive = self.enemies.copy()
         self.rollback_enemies_alive = [self.enemies_alive.copy()]
         self.targeted_enemy = self.enemies_alive[0]
@@ -358,111 +355,160 @@ class Match:
                 self.choose_targeted_enemy_window.update()
             time.sleep(player_values.REFRESH_RATE)
 
-    def choose_trinket(self):
-        self.softclear_window()
-        self.window.title("Choose Trinket")
-        chosen_trinket = None
-
-        def button_clicked(event):
-            nonlocal chosen_trinket
-            chosen_trinket = trinkets[event.widget.trinket_id]
-
-        for index, trinket in enumerate(trinkets.values()):
-            button = tkinter.Button(master=self.window, text=trinket.name)
-            button.trinket_id = trinket.identifier
-            button.bind("<Button-1>", button_clicked)
-            button.grid(row=0, column=index, padx=5)
-
-        while chosen_trinket is None:
-            self.window.update()
-            time.sleep(player_values.REFRESH_RATE)
-
-        self.clear_window()
-        return chosen_trinket
-
-    def choose_stats(self):
+    def choose_match_data(self):
         self.softclear_window()
         self.window.title("Insert Stats")
         player_stats = None
         pet_stats = None
-        stats_dir_path = f"{Gear.path}/data"
-        stats_file_path = f"{stats_dir_path}/stats.json"
+        trinket = None
+        armor = None
+        enemies = []
+        data_dir_path = f"{Gear.path}/data"
+        autofill_file_path = f"{data_dir_path}/autofill.json"
 
         def button_clicked(event):
             nonlocal player_stats
             nonlocal pet_stats
-            nonlocal stats_dir_path
-            nonlocal stats_file_path
+            nonlocal trinket
+            nonlocal armor
+            nonlocal enemies
+            nonlocal finished
+
+            finished = True
 
             player_stats_list = [int(stat_entry.get()) for stat_entry in player_stats_entries]
-            pet_stats_list = [int(stat_entry.get()) for stat_entry in pet_stats_entries]
-
-            # Save stats
-            stats_dict = {"player": player_stats_list, "pet": pet_stats_list}
-            if not os.path.exists(stats_dir_path):
-                os.mkdir(stats_dir_path)
-            json.dump(stats_dict, open(stats_file_path, "w"))
-
             player_stats = classes.MainStats(player_stats_list)
+
+            pet_stats_list = [int(stat_entry.get()) for stat_entry in pet_stats_entries]
             pet_stats = classes.PetStats(pet_stats_list)
 
+            trinket = trinkets[trinket_id_var.get()]
 
-        if os.path.exists(stats_file_path):
-            saved_stats_dict = json.load(open(stats_file_path, "r"))
-            saved_player_stats_list = saved_stats_dict["player"]
-            saved_pet_stats_list = saved_stats_dict["pet"]
+            player_gear = Gear.get_build(player_values.default_build_id)
+            player_gear[constants.SLOT_TRINKET] = trinket
+            armor_index = armor_index_var.get()
+            armor = match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, player_stats, level=player_values.level, gear=player_gear)
+
+            challenge_index = challenge_index_var.get()
+            for enemy in match_constants.ENEMIES_LIST[challenge_index][1]:
+                enemies.append(enemy(level=player_values.level))
+
+            # Save data for autofill
+            autofill_dict = {"player": player_stats_list, "pet": pet_stats_list, "trinket": trinket.identifier, "armor": armor_index, "enemies": challenge_index}
+            if not os.path.exists(data_dir_path):
+                os.mkdir(data_dir_path)
+            json.dump(autofill_dict, open(autofill_file_path, "w"))
+
+        if os.path.exists(autofill_file_path):
+            saved_autofill_dict = json.load(open(autofill_file_path, "r"))
+            saved_player_stats_list = saved_autofill_dict["player"]
+            saved_pet_stats_list = saved_autofill_dict["pet"]
+            saved_trinket_id = saved_autofill_dict["trinket"]
+            saved_armor_index = saved_autofill_dict["armor"]
+            saved_enemies_index = saved_autofill_dict["enemies"]
         else:
             saved_player_stats_list = [0] * 7
             saved_pet_stats_list = [0] * 5
+            saved_trinket_id = "empty_trinket"
+            saved_armor_index = 0
+            saved_enemies_index = 0
 
+        # Stats
+        stats_frame = tkinter.Frame(self.window)
+        stats_frame.grid(row=0, column=0, sticky=tkinter.W)
         current_row_index = 0
 
-        player_stats_label = tkinter.Label(master=self.window, text="Player stats:")
-        player_stats_label.grid(row=current_row_index, column=0)
+        player_stats_label = tkinter.Label(master=stats_frame, text="Player stats:")
+        player_stats_label.grid(row=current_row_index, column=0, sticky=tkinter.W)
         current_row_index += 1
         player_stats_entries = []
 
         for index, stat in enumerate(("STR", "DEX", "INT", "CHA", "LUK", "END", "WIS")):
-            current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
-            current_stat_label.grid(row=current_row_index, column=0, padx=5)
-            current_stat_entry = tkinter.Entry(master=self.window)
+            current_stat_label = tkinter.Label(master=stats_frame, text=f"{stat}:")
+            current_stat_label.grid(row=current_row_index, column=0, padx=5, sticky=tkinter.W)
+            current_stat_entry = tkinter.Entry(master=stats_frame)
             current_stat_entry.insert("end", str(saved_player_stats_list[index]))
             current_stat_entry.grid(row=current_row_index, column=1, padx=5)
             player_stats_entries.append(current_stat_entry)
             current_row_index += 1
 
         # Newline
-        tkinter.Label(master=self.window).grid(row=current_row_index, column=0)
+        tkinter.Label(master=stats_frame).grid(row=current_row_index, column=0)
         current_row_index += 1
 
-        pet_stats_label = tkinter.Label(master=self.window, text="Pet stats:")
-        pet_stats_label.grid(row=current_row_index, column=0)
+        pet_stats_label = tkinter.Label(master=stats_frame, text="Pet stats:")
+        pet_stats_label.grid(row=current_row_index, column=0, sticky=tkinter.W)
         current_row_index += 1
         pet_stats_entries = []
 
         for index, stat in enumerate(("protection", "magic", "fighting", "assistance", "mischief")):
-            current_stat_label = tkinter.Label(master=self.window, text=f"{stat}:")
-            current_stat_label.grid(row=current_row_index, column=0, padx=5)
-            current_stat_entry = tkinter.Entry(master=self.window)
+            current_stat_label = tkinter.Label(master=stats_frame, text=f"{stat}:")
+            current_stat_label.grid(row=current_row_index, column=0, padx=5, sticky=tkinter.W)
+            current_stat_entry = tkinter.Entry(master=stats_frame)
             current_stat_entry.insert("end", str(saved_pet_stats_list[index]))
             current_stat_entry.grid(row=current_row_index, column=1, padx=5)
             pet_stats_entries.append(current_stat_entry)
             current_row_index += 1
 
         # Newline
-        tkinter.Label(master=self.window).grid(row=current_row_index, column=0)
-        current_row_index += 1
+        tkinter.Label(master=stats_frame).grid(row=current_row_index, column=0)
 
+        # Trinkets
+        trinkets_frame = tkinter.Frame(master=self.window)
+        trinkets_frame.grid(row=1, column=0)
+        trinket_id_var = tkinter.StringVar(master=trinkets_frame, value=saved_trinket_id)
+
+        trinkets_label = tkinter.Label(master=trinkets_frame, text="Trinket:")
+        trinkets_label.grid(row=0, column=0, sticky=tkinter.W)
+
+        for index, trinket in enumerate(trinkets.values()):
+            button = tkinter.Radiobutton(master=trinkets_frame, text=trinket.name, variable=trinket_id_var, value=trinket.identifier)
+            button.grid(row=1, column=index, padx=5, sticky=tkinter.W)
+
+        # Newline
+        tkinter.Label(master=trinkets_frame).grid(row=len(trinkets), column=0)
+
+        # Armors
+        armors_frame = tkinter.Frame(master=self.window)
+        armors_frame.grid(row=2, column=0, sticky=tkinter.W)
+        armor_index_var = tkinter.IntVar(master=armors_frame, value=saved_armor_index)
+        armors_label = tkinter.Label(master=armors_frame, text="Armor:")
+        armors_label.grid(row=0, column=0, sticky=tkinter.W)
+
+        for i in range(len(match_constants.PLAYER_ARMOR_LIST)):
+            button = tkinter.Radiobutton(master=armors_frame, text=match_constants.PLAYER_ARMOR_LIST[i][0], variable=armor_index_var, value=i)
+            button.grid(row=1, column=i, padx=5, sticky=tkinter.W)
+
+        # Newline
+        tkinter.Label(master=armors_frame).grid(row=len(match_constants.PLAYER_ARMOR_LIST), column=0)
+
+        # Enemies
+        challenges_frame = tkinter.Frame(master=self.window)
+        challenges_frame.grid(row=3, column=0, sticky=tkinter.W)
+        challenge_index_var = tkinter.IntVar(master=challenges_frame, value=saved_enemies_index)
+        challenges_label = tkinter.Label(master=challenges_frame, text="Challenge:")
+        challenges_label.grid(row=0, column=0, sticky=tkinter.W)
+
+        for i in range(len(match_constants.ENEMIES_LIST)):
+            button = tkinter.Radiobutton(master=challenges_frame, text=match_constants.ENEMIES_LIST[i][0], variable=challenge_index_var, value=i)
+            button.grid(row=1, column=i, padx=5, sticky=tkinter.W)
+
+        # Newline
+        tkinter.Label(master=challenges_frame).grid(row=len(match_constants.ENEMIES_LIST), column=0)
+
+        # Finish button
         finish_button = tkinter.Button(master=self.window, text="Finish")
         finish_button.bind("<Button-1>", button_clicked)
-        finish_button.grid(row=current_row_index, column=0)
+        finish_button.grid(row=4, column=0)
 
-        while player_stats is None:
+        finished = False
+
+        while not finished:
             self.window.update()
             time.sleep(player_values.REFRESH_RATE)
 
         self.clear_window()
-        return player_stats, pet_stats
+        return player_stats, pet_stats, trinket, armor, enemies
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -694,75 +740,6 @@ class Match:
 
         for widget in self.window.children.values():
             widget.grid_remove()
-
-    def choose_armor(self):
-        """
-        Prompts the user to choose an armor from match_constants.PLAYER_ARMOR_LIST.
-
-        :return: An instance of the chosen armor class, using values from player_values
-        """
-
-        self.softclear_window()
-        button_list = []
-        armor_index = None
-
-        def button_clicked(event):
-            nonlocal armor_index
-            for btn in button_list:
-                if btn[0] == event.widget:
-                    armor_index = btn[1]
-
-        self.window.title("Choose Armor:")
-
-        for i in range(len(match_constants.PLAYER_ARMOR_LIST)):
-            button = tkinter.Button(master=self.window, text=match_constants.PLAYER_ARMOR_LIST[i][0])
-            button.bind("<Button-1>", button_clicked)
-            button_list.append((button, i))
-            button.grid(row=0, column=i, padx=5, pady=5)
-
-        while armor_index is None:
-            self.window.update()
-            time.sleep(player_values.REFRESH_RATE)
-
-        self.clear_window()
-        player_gear = Gear.get_build(player_values.default_build_id)
-        player_gear[constants.SLOT_TRINKET] = self.trinket
-        return match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, self.stats, level=player_values.level, gear=player_gear)
-
-    def choose_enemies(self):
-        """
-        Prompts the user to choose the enemies from match_constants.ENEMIES_LIST.
-
-        :return: A list of enemy instances based on the chosen enemy classes, using the player level from player_values.
-        """
-
-        button_list = []
-        enemy_index = None
-
-        def button_clicked(event):
-            nonlocal enemy_index
-            for btn in button_list:
-                if btn[0] == event.widget:
-                    enemy_index = btn[1]
-
-        self.window.title("Choose Enemy:")
-
-        for i in range(len(match_constants.ENEMIES_LIST)):
-            button = tkinter.Button(master=self.window, text=match_constants.ENEMIES_LIST[i][0])
-            button.bind("<Button-1>", button_clicked)
-            button_list.append((button, i))
-            button.grid(row=0, column=i, padx=5, pady=5)
-
-        while enemy_index is None:
-            self.window.update()
-            time.sleep(0.01)
-
-        enemies_list = []
-        for enemy in match_constants.ENEMIES_LIST[enemy_index][1]:
-            enemies_list.append(enemy(level=player_values.level))
-
-        self.clear_window()
-        return enemies_list
 
     def update_effects(self):
         """
