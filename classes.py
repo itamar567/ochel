@@ -429,7 +429,7 @@ Effects:"""
         if not glancing and on_hit_special:
             for message in self.on_hit_special_messages:
                 self.match.update_main_log(message, "p_comment")
-            if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_BEFORE_HIT:
+            if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_BEFORE_HIT and self.on_hit_special_func is not None:
                 damage = self.on_hit_special_func(self.match, entity, damage)
             if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_NEXT_TURN:
                 self.on_hit_special_apply_next_turn = True
