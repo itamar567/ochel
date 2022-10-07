@@ -23,24 +23,27 @@ class DetailWindow:
         self.window = tkinter.Tk()
         self.window.title(entity.name)
 
-        hp_progress_bar_style = ttk.Style(master=self.window)
+        progress_bars_frame = tkinter.Frame(master=self.window)
+        progress_bars_frame.grid(row=0, column=0, sticky=tkinter.W)
+
+        hp_progress_bar_style = ttk.Style(master=progress_bars_frame)
         hp_progress_bar_style.configure("HP.Horizontal.TProgressbar", troughcolor="black", background="red")
 
-        mp_progress_bar_style = ttk.Style(master=self.window)
+        mp_progress_bar_style = ttk.Style(master=progress_bars_frame)
         mp_progress_bar_style.configure("MP.Horizontal.TProgressbar", troughcolor="black", background="blue")
 
-        self.hp_progress_bar = ttk.Progressbar(master=self.window, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="HP.Horizontal.TProgressbar")
-        self.hp_progress_bar.grid(row=0, column=0)
-        self.hp_progress_label = tkinter.Label(master=self.window, foreground="red")
-        self.hp_progress_label.grid(row=0, column=1)
+        self.hp_progress_bar = ttk.Progressbar(master=progress_bars_frame, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="HP.Horizontal.TProgressbar")
+        self.hp_progress_bar.grid(row=0, column=0, padx=5)
+        self.hp_progress_label = tkinter.Label(master=progress_bars_frame, foreground="red")
+        self.hp_progress_label.grid(row=0, column=1, padx=5, sticky=tkinter.W)
 
-        self.mp_progress_bar = ttk.Progressbar(master=self.window, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="MP.Horizontal.TProgressbar")
-        self.mp_progress_bar.grid(row=1)
-        self.mp_progress_label = tkinter.Label(master=self.window, foreground="blue")
-        self.mp_progress_label.grid(row=1, column=1)
+        self.mp_progress_bar = ttk.Progressbar(master=progress_bars_frame, orient="horizontal", mode="determinate", length=constants.HP_MP_METER_LENGTH, maximum=1, style="MP.Horizontal.TProgressbar")
+        self.mp_progress_bar.grid(row=1, column=0, padx=5)
+        self.mp_progress_label = tkinter.Label(master=progress_bars_frame, foreground="blue")
+        self.mp_progress_label.grid(row=1, column=1, padx=5, sticky=tkinter.W)
 
         self.details_label = tkinter.Label(master=self.window, justify="left")
-        self.details_label.grid(row=2)
+        self.details_label.grid(row=2, column=0, sticky=tkinter.W)
 
         self.update()
 
