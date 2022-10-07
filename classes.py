@@ -281,6 +281,7 @@ class Entity:
         self.on_hit_special_apply_next_turn_entity = None
         self.on_hit_special_apply_next_turn_damage = None
         self.on_hit_special_messages = []
+        self.on_hit_special_bonuses_func = lambda match, entity: {}
 
         # Can be used by the entity to store the effects that it can apply/inflict
         self.available_effects = types.SimpleNamespace()
@@ -364,6 +365,15 @@ Effects:"""
         if element is not None:
             self.element = element
 
+        on_hit_bonuses = {}
+        if utilities.chance(self.on_hit_special_chance):
+            on_hit_special = True
+            on_hit_bonuses = self.on_hit_special_bonuses_func(self.match, entity)
+            for bonus in on_hit_bonuses.keys():
+                utilities.add_value(self.bonuses, bonus, on_hit_bonuses[bonus])
+        else:
+            on_hit_special = False
+
         glancing = False
         if can_miss:
             bonus = self.bonuses["bonus"]
@@ -416,9 +426,7 @@ Effects:"""
             if glancing:
                 damage *= 0.05
 
-        on_hit_special = False
-        if not glancing and utilities.chance(self.on_hit_special_chance):
-            on_hit_special = True
+        if not glancing and on_hit_special:
             for message in self.on_hit_special_messages:
                 self.match.update_main_log(message, "p_comment")
             if self.on_hit_special_apply_time == constants.ON_HIT_APPLY_BEFORE_HIT:
@@ -430,10 +438,14 @@ Effects:"""
 
         damage_dealt = entity.attacked(damage, self.element, self, inflicts=inflicts, mana_attack=mana_attack, glancing=glancing, crit=crit)
 
-        if on_hit_special and self.on_hit_special_apply_time == constants.ON_HIT_APPLY_AFTER_HIT:
+        if not glancing and on_hit_special and self.on_hit_special_apply_time == constants.ON_HIT_APPLY_AFTER_HIT:
             self.on_hit_special_func(self.match, entity, damage)
 
         self.element = old_element
+        for bonus in on_hit_bonuses.keys():
+            utilities.add_value(self.bonuses, bonus, -on_hit_bonuses[bonus])
+            if self.bonuses[bonus] == 0:
+                self.bonuses.pop(bonus)
 
         attack_code = constants.ATTACK_CODE_UNSUCCESSFUL if glancing else constants.ATTACK_CODE_SUCCESS
         if return_damage:
@@ -826,6 +838,7 @@ class Player(Entity):
             self.on_hit_special_chance = item.on_hit_chance
             self.on_hit_special_apply_time = item.on_hit_apply_time
             self.on_hit_special_messages = item.on_hit_messages
+            self.on_hit_special_bonuses_func = item.on_hit_bonuses_func
             self.on_attack_special_func = item.on_attack_func
             self.on_attack_special_chance = item.on_attack_chance
             return
@@ -896,6 +909,7 @@ class Player(Entity):
             self.on_hit_special_apply_time = None
             self.on_hit_special_chance = 0
             self.on_hit_special_messages = []
+            self.on_hit_special_bonuses_func = lambda match, entity: {}
             self.on_attack_special_func = None
             self.on_attack_special_chance = 0
             return

@@ -4,7 +4,7 @@ import misc
 
 class WeaponSpecial:
     def __init__(self, name, identifier, default=False,
-                 on_hit_func=None, on_hit_apply_time=constants.ON_HIT_APPLY_AFTER_HIT, on_hit_chance=0.0, on_hit_messages=None,
+                 on_hit_func=None, on_hit_apply_time=constants.ON_HIT_APPLY_AFTER_HIT, on_hit_chance=0.0, on_hit_messages=None, on_hit_bonuses_func=None,
                  on_attack_func=None, on_attack_chance=0.0):
         self.name = f"{name} (Special)"
         self.identifier = identifier
@@ -13,6 +13,10 @@ class WeaponSpecial:
         self.on_hit_apply_time = on_hit_apply_time
         self.on_hit_chance = on_hit_chance
         self.on_hit_messages = on_hit_messages
+        if on_hit_bonuses_func is None:
+            self.on_hit_bonuses_func = lambda match, entity: {}
+        else:
+            self.on_hit_bonuses_func = on_hit_bonuses_func
         self.on_attack_func = on_attack_func
         self.on_attack_chance = on_attack_chance
 
