@@ -1076,9 +1076,6 @@ class Player(Entity):
         Rollbacks the player one turn back.
         """
 
-        super().rollback()
-
-        old_stats = self.stats.copy()
         to_unequip = []
         for slot in self.gear.keys():
             if self.gear[slot] == self.rollback_gear[-2].get(slot, None):
@@ -1093,9 +1090,10 @@ class Player(Entity):
             to_equip.append((slot, self.rollback_gear[-2][slot]))
         for gear in to_equip:
             self.equip(gear[0], gear[1])
-
         self.rollback_gear.pop()
-        self.recalculate_bonuses(old_stats)
+
+        super().rollback()
+
         self.active_cooldowns = self.rollback_cooldown[-2].copy()
         self.rollback_cooldown.pop()
         self.hp_potion_count = self.rollback_hp_potion_count[-2]
