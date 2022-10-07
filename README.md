@@ -24,9 +24,37 @@ The gear you added will be saved, and you will be able to use it in future match
 ### Weapon Specials:
 Currently implemented weapon specials:
 
-- Ice Scythe
+- Dragon Blade
+- DragonBlaser
+- Escelense Blade
+- ZardSlayer Blade
+- Light of Destiny
+- Spider's Embrace
+- Vile Infused Rose Weapons
+- Lucky Hammer
+- Pandora's Scythe
+- Ruby Spike
+- Thorn Replica
+- Destiny Weapons
+- Doom Weapons
+- Fourth of July Weapons
+- Amulet Weapons
+- Ancient Frost Moglin Weapons
+- Doom Blade of Sorrows
 - Blade of Destiny (Level 80)
 - Blade of Destiny (Level 90)
+- Heart's Whisper
+- Ice Scythe
+- Blade of Awe
+- Frostval Weapons
+- The Quadstaff
+- Twilly's Staff
+- Warlic's Gift
+- Aww Weapons
+- Creatioux Claw
+- Frozen Weapons
+- Necrotic Sword of Doom
+- Vanilla Ice Katana
 
 ### Trinkets:
 Currently implemented trinkets:
