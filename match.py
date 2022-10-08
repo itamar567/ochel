@@ -287,6 +287,7 @@ class Match:
         self.inv_build_load_button = None
         self.inv_gear_list = None
         self.build_entry = None
+        self.inv_search_entry_var = None
         self.inv_buttons_disabled = False
         self.current_inv_item_list = None
         self.current_inv_slot_list = None
@@ -536,6 +537,17 @@ class Match:
             event.widget.equipped = True
             event.widget["text"] = "Unequip"
 
+    def search_inv_on_entry_update(self, var, index, mode):
+        text = self.inv_search_entry_var.get().lower()
+        item_list = []
+        slot_list = []
+        for slot in constants.INVENTORY_SLOTS:
+            for item in Gear.get_gear_list(slot):
+                if text in item.name.lower():
+                    item_list.append(item)
+                    slot_list.append(slot)
+        self.update_inv_window_by_item_list(item_list, slot_list)
+
     def setup_inv_window(self):
         self.inv_window.title("Inventory")
         upper_frame = tkinter.Frame(master=self.inv_window)
@@ -554,22 +566,36 @@ class Match:
         add_item_button.bind("<Button-1>", self.add_item_onclick)
         add_item_button.pack(side=tkinter.LEFT)
 
-        build_label = tkinter.Label(master=self.inv_window, text="Build ID:")
-        build_label.pack(side=tkinter.LEFT, padx=5)
-        self.build_entry = tkinter.Entry(master=self.inv_window)
-        self.build_entry.pack(side=tkinter.LEFT)
+        lower_frame = tkinter.Frame(master=self.inv_window)
+        lower_frame.pack(side=tkinter.BOTTOM, anchor=tkinter.W)
 
-        build_save_button = tkinter.Button(master=self.inv_window, text="Save")
+        # Search
+        search_label = tkinter.Label(master=lower_frame, text="Search:")
+        search_label.grid(row=0, column=0, padx=1, sticky=tkinter.W)
+        self.inv_search_entry_var = tkinter.StringVar()
+        self.inv_search_entry_var.trace_add("write", self.search_inv_on_entry_update)
+        search_entry = tkinter.Entry(master=lower_frame, textvariable=self.inv_search_entry_var)
+        search_entry.grid(row=0, column=1, padx=5)
+        search_entry.bind("<Control-a>", utilities.select_all)
+
+        # Builds
+        build_label = tkinter.Label(master=lower_frame, text="Build ID:")
+        build_label.grid(row=1, column=0, padx=1, sticky=tkinter.W)
+        self.build_entry = tkinter.Entry(master=lower_frame)
+        self.build_entry.grid(row=1, column=1, padx=5)
+        self.build_entry.bind("<Control-a>", utilities.select_all)
+
+        build_save_button = tkinter.Button(master=lower_frame, text="Save")
         build_save_button.bind("<Button-1>", self.save_build_onclick)
-        build_save_button.pack(side=tkinter.LEFT, padx=5)
+        build_save_button.grid(row=1, column=2, padx=5)
 
-        self.inv_build_load_button = tkinter.Button(master=self.inv_window, text="Load")
+        self.inv_build_load_button = tkinter.Button(master=lower_frame, text="Load")
         self.inv_build_load_button.bind("<Button-1>", self.load_build_onclick)
-        self.inv_build_load_button.pack(side=tkinter.LEFT, padx=5)
+        self.inv_build_load_button.grid(row=1, column=3, padx=5)
 
-        build_show_button = tkinter.Button(master=self.inv_window, text="Show")
+        build_show_button = tkinter.Button(master=lower_frame, text="Show")
         build_show_button.bind("<Button-1>", self.show_build_onclick)
-        build_show_button.pack(side=tkinter.LEFT, padx=5)
+        build_show_button.grid(row=1, column=4, padx=5)
 
     def save_build_onclick(self, event):
         build = {}

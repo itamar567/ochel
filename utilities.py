@@ -124,3 +124,9 @@ def stuffed(player):
         if effect.identifier == "food_stuffed":
             return True
     return False
+
+
+def select_all(event):
+    event.widget.select_range(0, "end")
+    event.widget.icursor("end")
+    return "break"
