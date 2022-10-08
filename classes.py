@@ -91,6 +91,7 @@ class Pet:
         self.match = player.match
         self.bonuses = {"crit_multiplier": 1.75}
         self.damage = (player.stats.CHA//10, player.stats.CHA//10)
+        self.base_damage_cap = math.floor(math.sqrt(player.level) * 100)
         self.skills = {}
         self.skill_images = {}
         self.skill_names = {}
@@ -156,7 +157,7 @@ class Pet:
         if bpd_roll <= 0:
             glancing = True
 
-        damage = random.randint(self.damage[0], self.damage[1])
+        damage = min(random.randint(self.damage[0], self.damage[1]), self.base_damage_cap)
         if multiply_first:
             damage *= damage_multiplier
             damage += damage_additive
@@ -265,6 +266,7 @@ class Entity:
 
         self.resists = {"health": -self.stats.WIS // 20}
         self.damage = (0, 0)
+        self.base_damage_cap = math.inf
         self.armor = "???"
         self.effects = []
         self.effects_fade_turn = {}
@@ -404,6 +406,8 @@ Effects:"""
 
         damage = random.randint(self.damage[0], self.damage[1])
         damage += self.stats.get_by_dmg_type(self.dmg_type) // 10
+        # noinspection PyTypeChecker
+        damage = min(damage, self.base_damage_cap)
         if multiply_first:
             damage *= damage_multiplier
             damage += damage_additive
@@ -748,6 +752,7 @@ class Player(Entity):
             gear = {}
 
         self.tag_prefix = "p"  # Used for coloring the main log, 'p' stands for player
+        self.base_damage_cap = math.floor(math.sqrt(self.level) * 100)
 
         # Gear
         self.gear = {}
