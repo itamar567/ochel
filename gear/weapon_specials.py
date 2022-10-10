@@ -10,6 +10,7 @@ class WeaponSpecial:
                  on_hit_func=None, on_hit_apply_time=constants.ON_HIT_APPLY_BEFORE_HIT, on_hit_chance=0.0, on_hit_messages=None, on_hit_bonuses_func=None,
                  on_attack_func=None, on_attack_chance=0.0):
         self.name = f"{name} (Special)"
+        self.original_name = name
         self.identifier = identifier
         self.default = default
         self.on_hit_func = on_hit_func

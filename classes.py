@@ -4,6 +4,7 @@ import tkinter
 import types
 
 import constants
+import player_values
 import utilities
 
 
@@ -784,13 +785,22 @@ class Player(Entity):
         self.on_attack_special_func = None
         self.on_attack_special_chance = 0
 
-        self.food_used = {}
-
         # Some armors use an extra button (e.g. ChW for soulthreads)
         self.extra_window = None
 
         for slot in gear.keys():
             self.equip(slot, gear[slot], update_details=False)
+
+        self.food_used_dict = {}
+        self.food_used_list = []
+        self.builds_used = [player_values.default_build_id]
+        self.gear_used = {}
+        for slot in self.gear.keys():
+            if slot == constants.SLOT_WEAPON_SPECIAL:
+                item_name = self.gear[slot].original_name
+            else:
+                item_name = self.gear[slot].name
+            self.gear_used[slot] = [item_name]
 
         # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
         self.hp = self.max_hp
@@ -806,7 +816,20 @@ class Player(Entity):
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
         self.rollback_resists = [self.resists.copy()]
-        self.rollback_food_used = [self.food_used.copy()]
+        self.rollback_food_used_dict = [self.food_used_dict.copy()]
+        self.rollback_food_used_list = [self.food_used_list.copy()]
+        self.rollback_gear_used = [utilities.copy_dict(self.gear_used)]
+        self.rollback_builds_used = [self.builds_used.copy()]
+
+    def update_gear_used(self):
+        for slot, item in self.gear.items():
+            if item.name in self.gear_used.get(slot, []) or (slot == constants.SLOT_WEAPON_SPECIAL and item.original_name in self.gear_used.get(slot, [])):
+                continue
+            if slot == constants.SLOT_WEAPON_SPECIAL:
+                item_name = item.original_name
+            else:
+                item_name = item.name
+            self.gear_used[slot].append(item_name)
 
     def recalculate_bonuses(self, old_stats):
         """
@@ -990,7 +1013,10 @@ class Player(Entity):
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_hp_potion_count.append(self.hp_potion_count)
         self.rollback_mp_potion_count.append(self.mp_potion_count)
-        self.rollback_food_used.append(self.food_used.copy())
+        self.rollback_food_used_dict.append(self.food_used_dict.copy())
+        self.rollback_food_used_list.append(self.food_used_list.copy())
+        self.rollback_gear_used.append(utilities.copy_dict(self.gear_used))
+        self.rollback_builds_used.append(self.builds_used.copy())
 
     def use_skill_button_onclick(self, event, attack_name=None):
         """
@@ -1008,6 +1034,7 @@ class Player(Entity):
                 attack_name = self.gear[constants.SLOT_TRINKET].ability_name
             else:
                 attack_name = self.skill_names[event.widget.skill]
+        self.update_gear_used()
         self.spend_mp_on_skill(event.widget.skill)
         if event.widget.skill not in ("N", "M"):
             if event.widget.skill == "B":
@@ -1105,8 +1132,14 @@ class Player(Entity):
         self.rollback_hp_potion_count.pop()
         self.mp_potion_count = self.rollback_mp_potion_count[-2]
         self.rollback_mp_potion_count.pop()
-        self.food_used = self.rollback_food_used[-2]
-        self.rollback_food_used.pop()
+        self.food_used_dict = self.rollback_food_used_dict[-2].copy()
+        self.rollback_food_used_dict.pop()
+        self.food_used_list = self.rollback_food_used_list[-2].copy()
+        self.rollback_food_used_list.pop()
+        self.builds_used = self.rollback_builds_used[-2].copy()
+        self.rollback_builds_used.pop()
+        self.gear_used = utilities.copy_dict(self.rollback_gear_used[-2])
+        self.rollback_gear_used.pop()
 
 
 class Enemy(Entity):

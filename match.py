@@ -395,7 +395,7 @@ class Match:
             player_gear = Gear.get_build(player_values.default_build_id)
             player_gear[constants.SLOT_TRINKET] = trinket
             armor_index = armor_index_var.get()
-            armor = match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, player_stats, level=player_values.level, gear=player_gear)
+            armor = match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, player_stats.copy(), level=player_values.level, gear=player_gear)
 
             challenge_index = challenge_index_var.get()
             for enemy in match_constants.ENEMIES_LIST[challenge_index][1]:
@@ -610,6 +610,7 @@ class Match:
         if event.widget["state"] == "disabled":
             return
         build_id = self.build_entry.get()
+        self.player.builds_used.append(build_id)
         build = Gear.get_build(build_id)
         for slot in build.keys():
             self.player.equip(slot, build[slot])
@@ -848,8 +849,9 @@ class Match:
             return
         self.player.add_effect(misc.Effect("Stuffed", "food_stuffed", event.widget.food.stuffed_duration, {}, {}))
         event.widget.food.use(self)
-        utilities.add_value(self.player.food_used, event.widget.food.identifier, 1)
-        if event.widget.food.max_uses - self.player.food_used[event.widget.food.identifier] == 0:
+        self.player.food_used_list.append(event.widget.food.name)
+        utilities.add_value(self.player.food_used_dict, event.widget.food.identifier, 1)
+        if event.widget.food.max_uses - self.player.food_used_dict[event.widget.food.identifier] == 0:
             event.widget["state"] = "disabled"
         self.disable_food_buttons()
         self.update_rotation_log(event.widget.food.name, double_turn=True)
@@ -881,7 +883,7 @@ class Match:
         """
 
         for button in self.food_buttons.values():
-            if button.food.max_uses - self.player.food_used.get(button.food.identifier, 0) == 0:
+            if button.food.max_uses - self.player.food_used_dict.get(button.food.identifier, 0) == 0:
                 button["state"] = "disabled"
             else:
                 button["state"] = "normal"
@@ -1167,29 +1169,43 @@ class Match:
 
     def export(self):
         text = ""
-        stats = classes.MainStats(self.stats)
-        if stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
+        if self.stats.__repr__() != "" or (isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != ""):
             text = "== Stats =="
-            if self.player.stats.__repr__() != "":
-                text += f"\n{stats}"
+            if self.stats.__repr__() != "":
+                text += f"\n{self.stats}"
             if isinstance(self.pet, pets.PetKidDragon) and self.pet.stats.__repr__() != "":
                 text += f"\n{self.pet.stats}"
             text += "\n\n"
         text += "== Builds =="
-        all_builds = Gear.get_all_builds()
-        for build_identifier in all_builds.keys():
+        for build_identifier in self.player.builds_used:
             text += f"\n- {build_identifier}"
+            build = Gear.get_build(build_identifier)
             for slot in constants.INVENTORY_SLOTS:
-                if slot in all_builds[build_identifier].keys():
-                    text += "\n"
+                if slot in build.keys():
+                    text += "\n    "
                     if slot == constants.SLOT_WEAPON_SPECIAL:
-                        text += "Slotted: "
-                    text += all_builds[build_identifier][slot].name
+                        text += f"Slotted: {build[slot].original_name}"
+                    else:
+                        text += build[slot].name
             text += "\n"
+        text += "\n== Gear ==\n"
+        for slot in constants.INVENTORY_SLOTS:
+            if slot in self.player.gear_used:
+                if slot == constants.SLOT_WEAPON_SPECIAL:
+                    text += "Slotted: "
+                for item in self.player.gear_used[slot]:
+                    text += f"{item} / "
+                text = text[:-3]
+            text += "\n"
+        text += "\n== Potions / Food =="
         hp_potions_used = 5 - self.player.hp_potion_count
         mp_potions_used = 5 - self.player.mp_potion_count
-        text += "\n== Potions / Food =="
-        text += f"\n{hp_potions_used}x HP, {mp_potions_used}x MP potion(s) used"
+        text += f"\nPotions: {hp_potions_used}x HP, {mp_potions_used}x MP"
+        if len(self.player.food_used_list) > 0:
+            text += f"\nFood:"
+            for food_name in self.player.food_used_list:
+                text += f" {food_name},"
+            text = text[:-1]
         return text
 
     def export_onclick(self, event):
