@@ -47,7 +47,16 @@ class Weapon(Item):
 
 
 class Gear:
-    path = f"{os.path.dirname(os.path.abspath(sys.argv[0]))}/gear"
+    path = os.path.expanduser('~')  # Home directory
+    if sys.platform == "win32":
+        path += "/AppData/Roaming"
+    elif sys.platform == "linux":
+        path += "/.local/share"
+    elif sys.platform == "darwin":
+        path += "/Library/Application Support"
+    else:
+        path = os.path.dirname(os.path.abspath(sys.argv[0]))  # The directory the program was executed in
+    path += "/OCHEL"
 
     @staticmethod
     def dict_to_item(item_dict, slot):

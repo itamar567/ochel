@@ -155,5 +155,5 @@ cython_debug/
 # PyCharm
 .idea/
 
-# Gear items
-gear/*/*.json
+# For unknown operating systems, the data will save in a directory named 'OCHEL'
+OCHEL/
