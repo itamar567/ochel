@@ -291,7 +291,6 @@ class Match:
         self.inv_buttons_disabled = False
         self.current_inv_item_list = None
         self.current_inv_slot_list = None
-        self.builds = Gear.get_all_builds()
         self.setup_inv_window()
 
         # Setup log window

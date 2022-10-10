@@ -143,14 +143,3 @@ class Gear:
             os.mkdir(f"{Gear.path}/builds/")
 
         json.dump(build, open(f"{Gear.path}/builds/{identifier}.json", "w"))
-
-    @staticmethod
-    def get_all_builds():
-        if not os.path.exists(f"{Gear.path}/builds/"):
-            return {}
-
-        builds = {}
-        for build_path in glob.glob(f"{Gear.path}/builds/*.json"):
-            build_id = build_path.split("/")[-1].replace(".json", "")
-            builds[build_id] = Gear.get_build(build_id)
-        return builds
