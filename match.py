@@ -551,8 +551,13 @@ class Match:
         self.inv_window.title("Inventory")
         upper_frame = tkinter.Frame(master=self.inv_window)
         upper_frame.pack(side=tkinter.TOP)
-        self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame, width=50, height=20)
+        self.inv_gear_list = tkinter.scrolledtext.ScrolledText(master=upper_frame, width=50, height=20, cursor="left_ptr")
         self.inv_gear_list.pack(side=tkinter.TOP)
+
+        # Disable text selection
+        self.inv_gear_list.bind("<ButtonPress-1>", lambda event: "break")
+        self.inv_gear_list.bind("<Motion>", lambda event: "break")
+
         self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
         for slot in constants.INVENTORY_SLOTS:
             button_img = tkinter.PhotoImage(master=upper_frame, file=f"images/inv_icons/{slot}.png")
