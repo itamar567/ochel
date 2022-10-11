@@ -120,7 +120,7 @@ class Pet:
                 file_name += "skip"
             else:
                 file_name += f"{self.armor.replace(' ', '_').lower()}/{skill}"
-            self.skill_images[skill] = tkinter.PhotoImage(file=f"{file_name}.png")
+            self.skill_images[skill] = tkinter.PhotoImage(file=utilities.resource_path(f"{file_name}.png"))
 
     def attack(self, entity, damage_multiplier=1.0, damage_additive=0.0, multiply_first=False,
                dmg_type=constants.DMG_TYPE_MAGIC):
@@ -1101,7 +1101,7 @@ class Player(Entity):
                 file_name += "mp"
             else:
                 file_name += f"{self.armor.lower()}/{skill}"
-            self.skill_images[skill] = tkinter.PhotoImage(file=f"{file_name}.png")
+            self.skill_images[skill] = tkinter.PhotoImage(file=utilities.resource_path(f"{file_name}.png"))
 
     def rollback(self):
         """

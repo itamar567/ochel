@@ -74,7 +74,7 @@ class AddItemWindow:
         for index, slot in enumerate(constants.INVENTORY_SLOTS):
             if slot == constants.SLOT_WEAPON_SPECIAL:
                 continue
-            button_img = tkinter.PhotoImage(master=self.window, file=f"images/inv_icons/{slot}.png")
+            button_img = tkinter.PhotoImage(master=self.window, file=utilities.resource_path(f"images/inv_icons/{slot}.png"))
             button = tkinter.Button(master=self.window, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             button.slot = slot
@@ -238,6 +238,8 @@ class AddItemWindow:
 
 class Match:
     def __init__(self):
+        self.is_running = True
+
         # Buttons
         self.buttons = {}
         self.pet_buttons = {}
@@ -245,6 +247,7 @@ class Match:
 
         # Setup window
         self.window = tkinter.Tk()
+        self.window.protocol("WM_DELETE_WINDOW", self.on_window_closed)
         self.style = ttk.Style()
         self.style.theme_use(constants.THEME)
         font.nametofont("TkDefaultFont").configure(family=constants.FONT_FAMILY, size=constants.FONT_SIZE)
@@ -254,6 +257,8 @@ class Match:
         # Setup enemies and player
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
         self.stats, self.pet_stats, self.trinket, self.player, self.enemies = self.choose_match_data()
+        if not self.is_running:
+            return
         self.enemies_alive = self.enemies.copy()
         self.rollback_enemies_alive = [self.enemies_alive.copy()]
         self.targeted_enemy = self.enemies_alive[0]
@@ -265,9 +270,9 @@ class Match:
         self.current_turn = 1
 
         # We need to keep a reference to the HP, MP, Skip and Trinket button images, so they won't get garbage-collected by python
-        self.hp_button_img = tkinter.PhotoImage(file="images/hp.png")
-        self.mp_button_img = tkinter.PhotoImage(file="images/mp.png")
-        self.skip_button_image = tkinter.PhotoImage(file="images/skip.png")
+        self.hp_button_img = tkinter.PhotoImage(file=utilities.resource_path("images/hp.png"))
+        self.mp_button_img = tkinter.PhotoImage(file=utilities.resource_path("images/mp.png"))
+        self.skip_button_image = tkinter.PhotoImage(file=utilities.resource_path("images/skip.png"))
         self.trinket_img = None
 
         # Setup main window and pet
@@ -356,11 +361,16 @@ class Match:
         if self.choose_targeted_enemy_window is not None:
             self.window_list.append(self.choose_targeted_enemy_window)
 
-        while True:
+        for window in self.window_list:
+            window.protocol("WM_DELETE_WINDOW", self.on_window_closed)
+        # Mainloop
+        while self.is_running:
             for window in self.window_list:
-                if window.state() == "normal":
-                    window.update()
+                window.update()
             time.sleep(player_values.REFRESH_RATE)
+
+    def on_window_closed(self):
+        self.is_running = False
 
     def choose_match_data(self):
         self.softclear_window()
@@ -510,11 +520,13 @@ class Match:
 
         finished = False
 
-        while not finished:
+        while not finished and self.is_running:
             self.window.update()
             time.sleep(player_values.REFRESH_RATE)
 
-        self.clear_window()
+        # If the user closed the window, we will return the empty values and exit __init__ afterwards
+        if self.is_running:
+            self.clear_window()
         return player_stats, pet_stats, trinket, armor, enemies
 
     def equip_item_onclick(self, event):
@@ -560,7 +572,7 @@ class Match:
 
         self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
         for slot in constants.INVENTORY_SLOTS:
-            button_img = tkinter.PhotoImage(master=upper_frame, file=f"images/inv_icons/{slot}.png")
+            button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"images/inv_icons/{slot}.png"))
             button = tkinter.Button(master=upper_frame, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             button.slot = slot
@@ -908,7 +920,7 @@ class Match:
                 if constants.SLOT_TRINKET not in self.player.gear.keys() \
                         or self.player.gear[constants.SLOT_TRINKET].ability_func is None:
                     continue
-                button_img = tkinter.PhotoImage(file=self.player.gear[constants.SLOT_TRINKET].ability_img_path, master=self.window)
+                button_img = tkinter.PhotoImage(file=utilities.resource_path(self.player.gear[constants.SLOT_TRINKET].ability_img_path), master=self.window)
                 self.trinket_img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             else:
                 button_img = self.player.skill_images[constants.KEYBOARD_CONTROLS[i]]
