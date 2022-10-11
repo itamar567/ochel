@@ -22,13 +22,13 @@ class Oratath(classes.Enemy):
         stats = classes.MainStats([16, 16, 16, 0, 0, 22, 0])
         super().__init__("Oratath", stats, level=level, race="dragon")
 
-        self.bonuses["mpm"] = 3
-        self.bonuses["parry"] = 1
-        self.bonuses["dodge"] = 2
-        self.bonuses["bonus"] = 23
-        self.bonuses["crit"] = 5
+        self.general_bonuses["mpm"] = 3
+        self.general_bonuses["parry"] = 1
+        self.general_bonuses["dodge"] = 2
+        self.general_bonuses["bonus"] = 23
+        self.general_bonuses["crit"] = 5
 
-        self.resists["immobility"] = 75
+        self.general_resists["immobility"] = 75
 
         self.element = "good"
         self.damage = (76, 76)
@@ -45,8 +45,8 @@ class Oratath(classes.Enemy):
 
         self.skill_1_multiplier = 0.75  # Oratath's attack 1's damage halves each time
 
-        self.rollback_bonuses = [self.bonuses.copy()]
-        self.rollback_resists = [self.resists.copy()]
+        self.rollback_general_bonuses = [self.general_bonuses.copy()]
+        self.rollback_general_resists = [self.general_resists.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
         self.rollback_active_cooldowns = [self.active_cooldowns.copy()]

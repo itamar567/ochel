@@ -69,7 +69,9 @@ def determine_damage_type_by_stats(entity):
 
 
 def stun_chance(entity):
-    immobility_resist = entity.resists.get("immobility", 0) + entity.resists.get("all", 0)
+    immobility_gear_resist = entity.gear_resists.get("immobility", 0) + entity.gear_resists.get("all", 0)
+    immobility_general_resist = entity.general_resists.get("immobility", 0) + entity.general_resists.get("all", 0)
+    immobility_resist = immobility_gear_resist + immobility_general_resist
     chance_to_stun = (100 - immobility_resist) / 100
     chance_to_stun = max(chance_to_stun, 0)
     return chance(chance_to_stun)
@@ -111,13 +113,16 @@ def clamp(value, minimum, maximum):
 
 def get_weakness_element(entity, default):
     element = default
-    resist = entity.resists.get(default, 0)
-    for elem in entity.resists.keys():
+    resist = entity.gear_resists.get(default, 0) + entity.general_resists.get(default, 0)
+    element_list = list(entity.general_resists.keys())
+    element_list.extend(list(entity.gear_resists.keys()))
+    for elem in element_list:
         if elem in ("immobility", "health", "shrink", "all"):
             continue
-        if entity.resists[elem] < resist:
+        current_resist = entity.gear_resists.get(elem, 0) + entity.general_resists.get(elem, 0)
+        if current_resist < resist:
             element = elem
-            resist = entity.resists[elem]
+            resist = current_resist
     return element
 
 

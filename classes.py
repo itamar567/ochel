@@ -136,8 +136,8 @@ class Pet:
 
         glancing = False
         bonus = self.bonuses.get("bonus", 0)
-        enemy_mpm = entity.bonuses.get(utilities.dmg_type_2_str(dmg_type) + "_def", 0)
-        enemy_mpm += entity.bonuses.get("mpm", 0)
+        enemy_mpm = entity.general_bonuses.get(utilities.dmg_type_2_str(dmg_type) + "_def", 0) + entity.gear_bonuses.get(utilities.dmg_type_2_str(dmg_type) + "_def", 0)
+        enemy_mpm += entity.general_bonuses.get("mpm", 0) + entity.gear_bonuses.get("mpm", 0)
 
         mpm_roll = random.randint(0, 150)
         mpm_roll += bonus
@@ -148,8 +148,8 @@ class Pet:
             return constants.ATTACK_CODE_UNSUCCESSFUL
 
         bpd_type = utilities.dmg_type_2_bpd(dmg_type)
-        enemy_bpd = entity.bonuses.get(bpd_type, 0)
-        enemy_bpd += entity.bonuses.get("bpd", 0)
+        enemy_bpd = entity.general_bonuses.get(bpd_type, 0) + entity.gear_bonuses.get(bpd_type, 0)
+        enemy_bpd += entity.general_bonuses.get("bpd", 0) + entity.gear_bonuses.get("bpd", 0)
 
         bpd_roll = random.randint(0, 150)
         bpd_roll += bonus
@@ -251,7 +251,8 @@ class Entity:
         self.race = race
         self.level = level
         self.stats = stats
-        self.bonuses = {}
+        self.general_bonuses = {}
+        self.gear_bonuses = {}
         self.max_hp = 100 + (level - 1) * 20 + stats.END * 5
         self.max_mp = 100 + (level - 1) * 5 + stats.WIS * 5
         self.hp = self.max_hp
@@ -259,13 +260,14 @@ class Entity:
         self.tag_prefix = ""  # Used for coloring the main log, 'e' if the entity is an enemy, else 'p'
 
         # Bonuses
-        self.bonuses["mpm"] = self.stats.LUK // 20
-        self.bonuses["crit"] = self.stats.LUK // 10
-        self.bonuses["crit_multiplier"] = 1.75
-        self.bonuses["bonus"] = self.stats.WIS // 10
-        self.bonuses["boost"] = 0
+        self.general_bonuses["mpm"] = self.stats.LUK // 20
+        self.general_bonuses["crit"] = self.stats.LUK // 10
+        self.general_bonuses["crit_multiplier"] = 1.75
+        self.general_bonuses["bonus"] = self.stats.WIS // 10
+        self.general_bonuses["boost"] = 0
 
-        self.resists = {"health": -self.stats.WIS // 20}
+        self.general_resists = {"health": -self.stats.WIS // 20}  # Resistances from all sources except gear
+        self.gear_resists = {}
         self.damage = (0, 0)
         self.base_damage_cap = math.inf
         self.armor = "???"
@@ -290,8 +292,10 @@ class Entity:
         self.available_effects = types.SimpleNamespace()
 
         # Rollback data
-        self.rollback_bonuses = [self.bonuses.copy()]
-        self.rollback_resists = [self.resists.copy()]
+        self.rollback_general_bonuses = [self.general_bonuses.copy()]
+        self.rollback_general_resists = [self.general_resists.copy()]
+        self.rollback_gear_bonuses = [self.gear_bonuses.copy()]
+        self.rollback_gear_resists = [self.gear_resists.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
         self.rollback_death_proof = [self.death_proof]
@@ -309,10 +313,10 @@ class Entity:
         self.max_mp = 100 + (self.level - 1) * 5 + self.stats.WIS * 5
         self.hp = min(self.max_hp, self.hp)
         self.mp = min(self.max_mp, self.mp)
-        self.bonuses["mpm"] += -(old_stats.LUK // 20) + (self.stats.LUK // 20)
-        self.bonuses["crit"] += -(old_stats.LUK // 10) + (self.stats.LUK // 10)
-        self.bonuses["bonus"] += -(old_stats.WIS // 10) + (self.stats.WIS // 10)
-        self.resists["health"] -= -(old_stats.WIS // 20) + (self.stats.WIS // 20)
+        self.general_bonuses["mpm"] += -(old_stats.LUK // 20) + (self.stats.LUK // 20)
+        self.general_bonuses["crit"] += -(old_stats.LUK // 10) + (self.stats.LUK // 10)
+        self.general_bonuses["bonus"] += -(old_stats.WIS // 10) + (self.stats.WIS // 10)
+        self.general_resists["health"] -= -(old_stats.WIS // 20) + (self.stats.WIS // 20)
         self.dot_multiplier = (1 + self.stats.DEX / 400)
 
     def get_details(self):
@@ -322,12 +326,18 @@ class Entity:
         result = f"""Level: {self.level}
 Stats: {self.stats}
 Bonuses:"""
-        for key in self.bonuses.keys():
-            result += f"\n        {key}: {self.bonuses[key]}"
+        bonuses_dict = self.general_bonuses.copy()
+        for bonus in self.gear_bonuses:
+            utilities.add_value(bonuses_dict, bonus, self.gear_bonuses[bonus])
+        for key in bonuses_dict.keys():
+            result += f"\n        {key}: {bonuses_dict[key]}"
         result += """
 Resistances:"""
-        for key in self.resists.keys():
-            result += f"\n        {key}: {self.resists[key]}"
+        resists_dict = self.general_resists.copy()
+        for elem in self.gear_resists:
+            utilities.add_value(resists_dict, elem, self.gear_resists[elem])
+        for key in resists_dict.keys():
+            result += f"\n        {key}: {resists_dict[key]}"
         result += """
 Effects:"""
         # The order the effects show in DF is the reversed order of self.effects
@@ -373,15 +383,15 @@ Effects:"""
             on_hit_special = True
             on_hit_bonuses = self.on_hit_special_bonuses_func(self.match, entity)
             for bonus in on_hit_bonuses.keys():
-                utilities.add_value(self.bonuses, bonus, on_hit_bonuses[bonus])
+                utilities.add_value(self.general_bonuses, bonus, on_hit_bonuses[bonus])
         else:
             on_hit_special = False
 
         glancing = False
         if can_miss:
-            bonus = self.bonuses["bonus"]
-            enemy_mpm = entity.bonuses.get(utilities.dmg_type_2_str(self.dmg_type) + "_def", 0)
-            enemy_mpm += entity.bonuses.get("mpm", 0)
+            bonus = self.general_bonuses.get("bonus", 0) + self.gear_bonuses.get("bonus", 0)
+            enemy_mpm = entity.general_bonuses.get(utilities.dmg_type_2_str(self.dmg_type) + "_def", 0) + entity.gear_bonuses.get(utilities.dmg_type_2_str(self.dmg_type) + "_def", 0)
+            enemy_mpm += entity.general_bonuses.get("mpm", 0) + entity.gear_bonuses.get("mpm", 0)
 
             mpm_roll = random.randint(0, 150)
             mpm_roll += bonus
@@ -395,8 +405,8 @@ Effects:"""
                 return constants.ATTACK_CODE_UNSUCCESSFUL
 
             bpd_type = utilities.dmg_type_2_bpd(self.dmg_type)
-            enemy_bpd = entity.bonuses.get(bpd_type, 0)
-            enemy_bpd += entity.bonuses.get("bpd", 0)
+            enemy_bpd = entity.general_bonuses.get(bpd_type, 0) + entity.gear_bonuses.get(bpd_type, 0)
+            enemy_bpd += entity.general_bonuses.get("bpd", 0) + entity.gear_bonuses.get("bpd", 0)
 
             bpd_roll = random.randint(0, 150)
             bpd_roll += bonus
@@ -416,16 +426,16 @@ Effects:"""
             damage += damage_additive
             damage *= damage_multiplier
 
-        crit_chance = (self.bonuses["crit"] / 200)
+        crit_chance = (self.general_bonuses.get("crit", 0) + min(self.gear_bonuses.get("crit", 0), 100)) / 200
         crit = False
         if utilities.chance(crit_chance):
             crit = True
 
-        damage = max(damage * (1 + self.bonuses.get("boost", 0) / 100), 0)
+        damage = max(damage * (1 + (self.general_bonuses.get("boost", 0) + self.gear_bonuses.get("boost", 0)) / 100), 0)
         damage *= (1 + self.stats.DEX / 4000)
 
         if crit and not glancing:
-            damage *= self.bonuses["crit_multiplier"] + self.stats.INT / 1000
+            damage *= (self.general_bonuses.get("crit_multiplier", 0) + self.gear_bonuses.get("crit_multiplier", 0)) + self.stats.INT / 1000
         else:
             damage *= (1 + self.stats.STR / 1000)
             if glancing:
@@ -448,9 +458,9 @@ Effects:"""
 
         self.element = old_element
         for bonus in on_hit_bonuses.keys():
-            utilities.add_value(self.bonuses, bonus, -on_hit_bonuses[bonus])
-            if self.bonuses[bonus] == 0:
-                self.bonuses.pop(bonus)
+            utilities.add_value(self.general_bonuses, bonus, -on_hit_bonuses[bonus])
+            if self.general_bonuses[bonus] == 0:
+                self.general_bonuses.pop(bonus)
 
         attack_code = constants.ATTACK_CODE_UNSUCCESSFUL if glancing else constants.ATTACK_CODE_SUCCESS
         if return_damage:
@@ -474,13 +484,13 @@ Effects:"""
         """
 
         for bonus in bonuses.keys():
-            utilities.add_value(self.bonuses, bonus, bonuses[bonus])
+            utilities.add_value(self.general_bonuses, bonus, bonuses[bonus])
         self.attack(entity, damage_multiplier=damage_multiplier, damage_additive=damage_additive,
                     multiply_first=multiply_first, element=element, can_miss=can_miss, return_damage=return_damage, inflicts=inflicts)
         for bonus in bonuses.keys():
-            utilities.add_value(self.bonuses, bonus, -bonuses[bonus])
-            if self.bonuses[bonus] == 0:
-                self.bonuses.pop(bonus)
+            utilities.add_value(self.general_bonuses, bonus, -bonuses[bonus])
+            if self.general_bonuses[bonus] == 0:
+                self.general_bonuses.pop(bonus)
 
     def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[], mana_attack=False):
         """
@@ -502,8 +512,9 @@ Effects:"""
         cap = self.resist_cap
         if element == "immobility":
             cap = math.inf
-        all_resist = self.resists.get("all", 0) if constants.MANA_ELEMENT != element != "null" else 0  # Null and mana attacks ignore all resist
-        resist = min(all_resist + self.resists.get(element, 0), cap)
+        gear_resist = min(self.gear_resists.get("all", 0) + self.gear_resists.get(element, 0), 80)
+        general_resist = self.general_resists.get("all", 0) + self.general_resists.get(element, 0)
+        resist = min(gear_resist + general_resist, cap)
         damage *= (100 - resist) / 100
         if element == "health":
             damage = round(damage)
@@ -599,9 +610,9 @@ Effects:"""
             return
 
         for bonus in effect.bonuses.keys():
-            utilities.add_value(self.bonuses, bonus, -effect.bonuses[bonus])
+            utilities.add_value(self.general_bonuses, bonus, -effect.bonuses[bonus])
         for elem in effect.resists.keys():
-            utilities.add_value(self.resists, elem, -effect.resists[elem])
+            utilities.add_value(self.general_resists, elem, -effect.resists[elem])
         if effect.death_proof:
             death_proof = False
             for eff in self.effects:
@@ -648,9 +659,9 @@ Effects:"""
         self.effects.append(effect)
         utilities.add_value(self.effects_fade_turn, fade_turn, effect, dict_of_lists=True)
         for bonus in effect.bonuses.keys():
-            utilities.add_value(self.bonuses, bonus, effect.bonuses[bonus])
+            utilities.add_value(self.general_bonuses, bonus, effect.bonuses[bonus])
         for elem in effect.resists.keys():
-            utilities.add_value(self.resists, elem, effect.resists[elem])
+            utilities.add_value(self.general_resists, elem, effect.resists[elem])
         if effect.death_proof:
             self.death_proof = True
 
@@ -701,8 +712,10 @@ Effects:"""
         """
 
         self.rollback_effects.append(self.effects.copy())
-        self.rollback_bonuses.append(self.bonuses.copy())
-        self.rollback_resists.append(self.resists.copy())
+        self.rollback_general_bonuses.append(self.general_bonuses.copy())
+        self.rollback_general_resists.append(self.general_resists.copy())
+        self.rollback_gear_bonuses.append(self.gear_bonuses.copy())
+        self.rollback_gear_resists.append(self.gear_resists.copy())
         self.rollback_death_proof.append(self.death_proof)
         self.rollback_hp.append(self.hp)
         self.rollback_mp.append(self.mp)
@@ -730,10 +743,14 @@ Effects:"""
         self.effects_fade_turn = utilities.copy_dict(self.rollback_effect_fade_turn[-2])
         self.rollback_effect_fade_turn.pop()
 
-        self.bonuses = self.rollback_bonuses[-2].copy()
-        self.rollback_bonuses.pop()
-        self.resists = self.rollback_resists[-2].copy()
-        self.rollback_resists.pop()
+        self.general_bonuses = self.rollback_general_bonuses[-2].copy()
+        self.rollback_general_bonuses.pop()
+        self.general_resists = self.rollback_general_resists[-2].copy()
+        self.rollback_general_resists.pop()
+        self.gear_bonuses = self.rollback_gear_bonuses[-2].copy()
+        self.rollback_gear_bonuses.pop()
+        self.gear_resists = self.rollback_gear_resists[-2].copy()
+        self.rollback_gear_resists.pop()
         self.hp = self.rollback_hp[-2]
         self.rollback_hp.pop()
         self.mp = self.rollback_mp[-2]
@@ -758,10 +775,6 @@ class Player(Entity):
         # Gear
         self.gear = {}
         self.gear_identifiers = set()  # Set of all items' identifiers
-        self.gear_resists = {}
-        self.gear_bonuses = {}
-        self.gear_resists_uncapped = {}
-        self.gear_bonuses_uncapped = {}
         self.default_weapon = None
 
         # Potions
@@ -772,7 +785,7 @@ class Player(Entity):
 
         # Resists
         self.resist_cap = 99
-        self.resists["immobility"] = self.stats.END // 5
+        self.general_resists["immobility"] = self.stats.END // 5
 
         # Skills
         self.mana_cost = {}
@@ -807,15 +820,16 @@ class Player(Entity):
         self.mp = self.max_mp
 
         # Rollback data
-        self.rollback_bonuses = [self.bonuses.copy()]
-        self.rollback_resists = [self.resists.copy()]
+        self.rollback_gear_bonuses = [self.gear_bonuses.copy()]
+        self.rollback_gear_resists = [self.gear_resists.copy()]
+        self.rollback_general_resists = [self.general_resists.copy()]
+        self.rollback_general_bonuses = [self.general_bonuses.copy()]
         self.rollback_hp = [self.hp]
         self.rollback_mp = [self.mp]
         self.rollback_gear = [self.gear.copy()]
         self.rollback_cooldown = [self.active_cooldowns.copy()]
         self.rollback_hp_potion_count = [self.hp_potion_count]
         self.rollback_mp_potion_count = [self.mp_potion_count]
-        self.rollback_resists = [self.resists.copy()]
         self.rollback_food_used_dict = [self.food_used_dict.copy()]
         self.rollback_food_used_list = [self.food_used_list.copy()]
         self.rollback_gear_used = [utilities.copy_dict(self.gear_used)]
@@ -838,7 +852,7 @@ class Player(Entity):
         """
 
         super().recalculate_bonuses(old_stats)
-        self.resists["immobility"] += -(old_stats.END // 5) + (self.stats.END // 5)
+        self.general_resists["immobility"] += -(old_stats.END // 5) + (self.stats.END // 5)
 
     def equip(self, slot, item, update_details=True):
         """
@@ -881,13 +895,7 @@ class Player(Entity):
             self.damage = (item.damage[0], item.damage[1])
 
         for elem in item.resists.keys():
-            cap = constants.PER_ELEM_RESIST_CAP
-            if elem == "health":
-                cap = math.inf
-            old_gear_resist = self.gear_resists.get(elem, 0)
-            utilities.add_value(self.gear_resists, elem, item.resists[elem], cap=cap)
-            utilities.add_value(self.gear_resists_uncapped, elem, item.resists[elem])
-            self.resists[elem] = self.resists.get(elem, 0) - old_gear_resist + self.gear_resists[elem]
+            utilities.add_value(self.gear_resists, elem, item.resists[elem])
 
         old_stats = self.stats.copy()
         stats_changed = False
@@ -897,15 +905,7 @@ class Player(Entity):
                 stats_changed = True
                 self.stats.add_by_str(bonus, item.bonuses[bonus])
                 continue
-
-            old_gear_bonus = self.gear_bonuses.get(bonus, 0)
-            if bonus == "crit":  # crit has a cap of 100 from gear
-                utilities.add_value(self.gear_bonuses, bonus, item.bonuses[bonus], cap=constants.CRIT_CAP)
-            else:
-                utilities.add_value(self.gear_bonuses, bonus, item.bonuses[bonus])
-            utilities.add_value(self.gear_bonuses_uncapped, bonus, item.bonuses[bonus])
-
-            self.bonuses[bonus] = self.bonuses.get(bonus, 0) - old_gear_bonus + self.gear_bonuses[bonus]
+            utilities.add_value(self.gear_bonuses, bonus, item.bonuses[bonus])
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
@@ -943,10 +943,7 @@ class Player(Entity):
             return
 
         for elem in item.resists.keys():
-            old_gear_resist = self.gear_resists[elem]
-            self.gear_resists_uncapped[elem] -= item.resists[elem]
-            self.gear_resists[elem] = min(self.gear_resists_uncapped[elem], constants.PER_ELEM_RESIST_CAP)
-            self.resists[elem] = self.resists.get(elem, 0) - old_gear_resist + self.gear_resists[elem]
+            self.gear_resists[elem] -= item.resists[elem]
 
         stats_changed = False
         old_stats = self.stats.copy()
@@ -956,12 +953,7 @@ class Player(Entity):
                 stats_changed = True
                 self.stats.add_by_str(bonus, -item.bonuses[bonus])
                 continue
-
-            old_gear_bonus = self.gear_bonuses[bonus]
-            self.gear_bonuses_uncapped[bonus] -= item.bonuses[bonus]
-            self.gear_bonuses[bonus] = min(self.gear_bonuses_uncapped[bonus],
-                                           (constants.CRIT_CAP if bonus == "crit" else math.inf))
-            self.bonuses[bonus] = self.bonuses.get(bonus, 0) - old_gear_bonus + self.gear_bonuses[bonus]
+            self.gear_bonuses[bonus] -= item.bonuses[bonus]
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
@@ -1165,7 +1157,9 @@ class Enemy(Entity):
     def attacked(self, damage, element, entity=None, dot=False, glancing=False, crit=False, inflicts=[], mana_attack=False):
         if element == "health":
             cap = self.resist_cap
-            resist = min(self.resists.get("all", 0) + self.resists.get(element, 0), cap)
+            general_resist = min(self.general_resists.get("all", 0) + self.general_resists.get(element, 0), cap)
+            gear_resist = min(self.gear_resists.get("all", 0) + self.gear_resists.get(element, 0), cap)
+            resist = gear_resist + general_resist
             damage *= (100 - resist) / 100
             if resist > 100 and not dot:  # Enemies with 100+ health resist heal for 1 HP from sources that aren't HoTs.
                 damage = 1

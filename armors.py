@@ -35,10 +35,10 @@ class Chaosweaver(classes.Player):
         self.cooldowns = {"V": 16, "C": 7, "0": 9, "9": 9, "8": 19, "7": 3, "6": 9, " ": 0,
                           "5": 8, "4": 4, "3": 4, "2": 4, "1": 4, "X": 14, "Z": 10}
         self.update_skill_images()
-        self.bonuses["mpm"] = 5
-        self.bonuses["crit"] += 5
-        self.bonuses["bpd"] = 5
-        self.bonuses["crit_multiplier"] = 1.85
+        utilities.add_value(self.general_bonuses, "mpm", 5)
+        utilities.add_value(self.gear_bonuses, "crit", 5)
+        utilities.add_value(self.general_bonuses, "bpd", 5)
+        self.general_bonuses["crit_multiplier"] = 1.85
 
         self.extra_window = tkinter.Tk()
         self.extra_window.title("Soulthreads")
@@ -47,7 +47,8 @@ class Chaosweaver(classes.Player):
         self.extra_button.pack()
 
         self.rollback_soulthreads = [self.soulthreads]
-        self.rollback_bonuses = [self.bonuses.copy()]
+        self.rollback_gear_bonuses = [self.gear_bonuses.copy()]
+        self.rollback_general_bonuses = [self.general_bonuses.copy()]
         self.rollback_empowered = [self.empowered]
 
         # Effects
@@ -276,8 +277,8 @@ class Technomancer(classes.Player):
                           "5": 25, "4": 30, "3": 0, "2": 40, "1": 35, "X": 35, "Z": 0}
         self.cooldowns = {"V": 8, "C": 1, "0": 2, "9": 4, "8": 7, "7": 9, "6": 6, " ": 0,
                           "5": 5, "4": 13, "3": 18, "2": 9, "1": 14, "X": 11, "Z": 0}
-        self.bonuses["mpm"] = 5
-        self.bonuses["crit"] += 5
+        utilities.add_value(self.general_bonuses, "mpm", 5)
+        utilities.add_value(self.gear_bonuses, "crit", 5)
 
         self.rollback_heat_level = [self.heat_level]
         self.rollback_old_mp = [self.old_mp]
