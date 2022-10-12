@@ -527,8 +527,9 @@ Effects:"""
             else:
                 self.match.update_main_log(f"{self.name} recovers {damage} {'MP' if mana_attack else 'HP'}.", f"{self.tag_prefix}_heal")
 
-            for effect in inflicts:
-                self.add_effect(effect)
+            if not glancing or crit:
+                for effect in inflicts:
+                    self.add_effect(effect)
         else:
             damage = round(damage)
 
@@ -574,8 +575,9 @@ Effects:"""
                     else:
                         self.match.update_main_log(f"{entity.name} hits {self.name} for {damage} {element} {dmg_message}.", f"{self.tag_prefix}_attacked")
 
-            for effect in inflicts:
-                self.add_effect(effect)
+            if not glancing or crit:
+                for effect in inflicts:
+                    self.add_effect(effect)
 
             if self.hp > 0:
                 for effect in self.effects:
