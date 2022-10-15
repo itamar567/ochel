@@ -73,7 +73,6 @@ Click the green Code button above the file list, then click Download ZIP and unz
 
 #### Configuring
 Edit `player_values.py` and configure the variables.
-I plan on adding a user-friendly way of changing the dragon kid's element.
 
 #### Running the program
 Double-click `main.py` to run the program.

@@ -1,17 +1,26 @@
 import math
+import os.path
 
 import classes
 import constants
 import misc
 import player_values
 import utilities
+from gear.gear import Gear
 
 
 class PetKidDragon(classes.Pet):
+    ELEMENT_FILE_PATH = f"{Gear.path}/data/dragon_element.txt"
+
     def __init__(self, name, player, stats):
         super().__init__(name, player)
 
-        self.element = player_values.pet_dragon_element
+        if os.path.exists(self.ELEMENT_FILE_PATH):
+            self.element = open(self.ELEMENT_FILE_PATH, "r").read()
+        else:
+            self.element = "fire"
+            open(self.ELEMENT_FILE_PATH, "w").write(self.element)
+
         self.enemies = player.match.enemies
         self.stats = stats
         self.bonuses = {"crit_multiplier": 1.75, "bonus": math.floor(20 + self.level * 0.5), "crit": 10}

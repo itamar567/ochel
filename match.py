@@ -276,6 +276,8 @@ class Match:
         self.trinket_img = None
 
         # Setup main window and pet
+        self.pet_dragon_element_window_open = False
+        self.pet_dragon_element_window = None
         self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, self.pet_stats)
         self.setup_window_pet()
         self.softclear_window()
@@ -904,6 +906,34 @@ class Match:
             else:
                 button["state"] = "normal"
 
+    def on_dragon_element_window_closed(self):
+        self.pet_dragon_element_window_open = False
+        self.pet_dragon_element_window.destroy()
+
+    def change_dragon_element_onclick(self, event):
+        if not isinstance(self.pet, pets.PetKidDragon):
+            return
+        self.pet.element = event.widget.element
+        file = open(pets.PetKidDragon.ELEMENT_FILE_PATH, "w")
+        file.write(event.widget.element)
+        file.close()
+        self.update_main_log(f"{self.pet.name}'s element changed to {event.widget.element}")
+        self.update_rotation_log(f"Change dragon element to {event.widget.element}", double_turn=True)
+
+    def open_dragon_element_window_onclick(self, event):
+        if self.pet_dragon_element_window_open:
+            return
+        self.pet_dragon_element_window = tkinter.Toplevel()
+        self.pet_dragon_element_window.protocol("WM_DELETE_WINDOW", self.on_dragon_element_window_closed)
+        self.pet_dragon_element_window.title("Dragon Element")
+        for index, element in enumerate(constants.DRAGON_ELEMENTS_LIST):
+            button = tkinter.Button(master=self.pet_dragon_element_window, text=element)
+            button.element = element.lower()
+            button.bind("<Button-1>", self.change_dragon_element_onclick)
+            button.grid(row=index, column=0)
+
+        self.pet_dragon_element_window_open = True
+
     def setup_window_player(self):
         """
         Setups the player window.
@@ -930,16 +960,21 @@ class Match:
             button.grid(row=0, column=i)
             self.buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
 
-        button = tkinter.Button(master=self.window, text="Back")
-        button.bind("<Button-1>", self.rollback)
-        button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS), padx=5, pady=5)
-        self.buttons["Back"] = (button, button.grid_info())
+        back_button = tkinter.Button(master=self.window, text="Back")
+        back_button.bind("<Button-1>", self.rollback)
+        back_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS), padx=5, pady=5)
+        self.buttons["Back"] = (back_button, back_button.grid_info())
         self.buttons["Back"][0]["state"] = "disabled"
 
-        button = tkinter.Button(master=self.window, text="Export")
-        button.bind("<Button-1>", self.export_onclick)
-        button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 1, padx=5, pady=5)
-        self.buttons["Export"] = (button, button.grid_info())
+        dragon_element_button = tkinter.Button(master=self.window, text="Dragon Element")
+        dragon_element_button.bind("<Button-1>", self.open_dragon_element_window_onclick)
+        dragon_element_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 1, padx=5, pady=5)
+        self.buttons["Dragon_Element"] = (dragon_element_button, dragon_element_button.grid_info())
+
+        export_button = tkinter.Button(master=self.window, text="Export")
+        export_button.bind("<Button-1>", self.export_onclick)
+        export_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 2, padx=5, pady=5)
+        self.buttons["Export"] = (export_button, export_button.grid_info())
 
     def show_window_player(self):
         """
@@ -979,6 +1014,11 @@ class Match:
             button.bind("<Button-1>", self.pet.use_skill)
             button.grid(row=0, column=i)
             self.pet_buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
+
+        dragon_element_button = tkinter.Button(master=self.window, text="Element")
+        dragon_element_button.bind("<Button-1>", self.open_dragon_element_window_onclick)
+        dragon_element_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS), padx=5, pady=5)
+        self.pet_buttons["Element"] = (dragon_element_button, dragon_element_button.grid_info())
 
     def show_window_pet(self):
         """
