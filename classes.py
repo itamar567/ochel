@@ -221,8 +221,7 @@ class Pet:
 
         if event.widget["state"] == "disabled":
             return
-        self.rollback_cooldown.append(self.active_cooldowns.copy())
-        self.rollback_waking_up.append(self.waking_up)
+        self.update_rollback_data()
         self.match.update_main_log(f"{self.name} uses skill {self.skill_names[event.widget.skill]}", "pet_comment")
         if event.widget.skill != " ":
             self.match.update_rotation_log(self.skill_names[event.widget.skill], add_to_last_attack=True)
@@ -240,6 +239,10 @@ class Pet:
         self.rollback_cooldown.pop()
         self.waking_up = self.rollback_waking_up[-1]
         self.rollback_waking_up.pop()
+
+    def update_rollback_data(self):
+        self.rollback_cooldown.append(self.active_cooldowns.copy())
+        self.rollback_waking_up.append(self.waking_up)
 
 
 class Entity:

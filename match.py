@@ -244,6 +244,8 @@ class Match:
         self.buttons = {}
         self.pet_buttons = {}
         self.food_buttons = {}
+        self.extra_buttons_frame = None
+        self.extra_buttons = {}
 
         # Setup window
         self.window = tkinter.Tk()
@@ -275,30 +277,30 @@ class Match:
         self.skip_button_image = tkinter.PhotoImage(file=utilities.resource_path("images/skip.png"))
         self.trinket_img = None
 
-        # Setup main window and pet
-        self.pet_dragon_element_window_open = False
+        # Setup inventory window variables
+        self.inv_window = None
+        self.inv_buttons = {}
+        self.inv_build_load_button = None
+        self.inv_gear_list = None
+        self.inv_search_entry_var = tkinter.StringVar()
+        self.inv_search_entry_var.trace_add("write", self.search_inv_on_entry_update)
+        self.inv_build_entry_var = tkinter.StringVar()
+        self.inv_buttons_disabled = False
+        self.current_inv_item_list = Gear.get_gear_list(constants.INVENTORY_SLOTS[0])
+        self.current_inv_slot_list = [constants.INVENTORY_SLOTS[0]] * len(self.current_inv_item_list)
+
+        # Setup food window variables
+        self.food_window = None
+        self.food_buttons_disabled = False
+
+        # Setup dragon element window variables
         self.pet_dragon_element_window = None
+
+        # Setup main window and pet
         self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, self.pet_stats)
         self.setup_window_pet()
         self.softclear_window()
         self.setup_window_player()
-
-        # Setup food window
-        self.food_window = tkinter.Toplevel()
-        self.food_window.title("Food")
-        self.setup_window_food()
-
-        # Setup inventory window
-        self.inv_window = tkinter.Toplevel()
-        self.inv_buttons = {}
-        self.inv_build_load_button = None
-        self.inv_gear_list = None
-        self.build_entry = None
-        self.inv_search_entry_var = None
-        self.inv_buttons_disabled = False
-        self.current_inv_item_list = None
-        self.current_inv_slot_list = None
-        self.setup_inv_window()
 
         # Setup log window
         self.log_window = tkinter.Toplevel()
@@ -355,7 +357,7 @@ class Match:
             self.entities_windows.append(DetailWindow(entity))
         self.update_player_skill_buttons()
 
-        self.window_list = [self.window, self.log_window, self.food_window, self.inv_window]
+        self.window_list = [self.window, self.log_window]
         for detail_window in self.entities_windows:
             self.window_list.append(detail_window.window)
         if self.player.extra_window is not None:
@@ -572,7 +574,7 @@ class Match:
         self.inv_gear_list.bind("<ButtonPress-1>", lambda event: "break")
         self.inv_gear_list.bind("<Motion>", lambda event: "break")
 
-        self.update_inv_window_by_slot(constants.INVENTORY_SLOTS[0])
+        self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         for slot in constants.INVENTORY_SLOTS:
             button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"images/inv_icons/{slot}.png"))
             button = tkinter.Button(master=upper_frame, image=button_img)
@@ -590,8 +592,6 @@ class Match:
         # Search
         search_label = tkinter.Label(master=lower_frame, text="Search:")
         search_label.grid(row=0, column=0, padx=1, sticky=tkinter.W)
-        self.inv_search_entry_var = tkinter.StringVar()
-        self.inv_search_entry_var.trace_add("write", self.search_inv_on_entry_update)
         search_entry = tkinter.Entry(master=lower_frame, textvariable=self.inv_search_entry_var)
         search_entry.grid(row=0, column=1, padx=5)
         search_entry.bind("<Control-a>", utilities.select_all)
@@ -599,9 +599,9 @@ class Match:
         # Builds
         build_label = tkinter.Label(master=lower_frame, text="Build ID:")
         build_label.grid(row=1, column=0, padx=1, sticky=tkinter.W)
-        self.build_entry = tkinter.Entry(master=lower_frame)
-        self.build_entry.grid(row=1, column=1, padx=5)
-        self.build_entry.bind("<Control-a>", utilities.select_all)
+        inv_build_entry = tkinter.Entry(master=lower_frame, textvariable=self.inv_build_entry_var)
+        inv_build_entry.grid(row=1, column=1, padx=5)
+        inv_build_entry.bind("<Control-a>", utilities.select_all)
 
         build_save_button = tkinter.Button(master=lower_frame, text="Save")
         build_save_button.bind("<Button-1>", self.save_build_onclick)
@@ -622,12 +622,12 @@ class Match:
                 continue
             build[slot] = self.player.gear[slot].identifier
 
-        Gear.save_build(build, self.build_entry.get())
+        Gear.save_build(build, self.inv_build_entry_var.get())
 
     def load_build_onclick(self, event):
         if event.widget["state"] == "disabled":
             return
-        build_id = self.build_entry.get()
+        build_id = self.inv_build_entry_var.get()
         self.player.builds_used.append(build_id)
         build = Gear.get_build(build_id)
         for slot in build.keys():
@@ -637,7 +637,7 @@ class Match:
         self.update_rotation_log(f"Switch to build {build_id}", double_turn=True)
 
     def show_build_onclick(self, event):
-        build = Gear.get_build(self.build_entry.get())
+        build = Gear.get_build(self.inv_build_entry_var.get())
         item_list = []
         slot_list = []
         for slot in build.keys():
@@ -646,9 +646,15 @@ class Match:
         self.update_inv_window_by_item_list(item_list, slot_list)
 
     def refresh_inv_window(self):
+        if self.inv_window is None:
+            return
+
         self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
 
     def update_inv_window_by_slot(self, slot):
+        if self.inv_window is None:
+            return
+
         item_list = Gear.get_gear_list(slot)
         self.update_inv_window_by_item_list(item_list, [slot] * len(item_list))
 
@@ -658,6 +664,10 @@ class Match:
         :param item_list: The list of items to show
         :param slot_list: A list of slots, slot_list[i] = slot of item_list[i]
         """
+
+        if self.inv_window is None:
+            return
+
         self.current_inv_item_list = item_list
         self.current_inv_slot_list = slot_list
         self.inv_gear_list.configure(state="normal")
@@ -691,12 +701,16 @@ class Match:
 
     def disable_inventory_buttons(self):
         self.inv_buttons_disabled = True
+        if self.inv_window is None:
+            return
         for button in self.inv_buttons.values():
             button["state"] = "disabled"
         self.inv_build_load_button["state"] = "disabled"
 
     def enable_inventory_buttons(self):
         self.inv_buttons_disabled = False
+        if self.inv_window is None:
+            return
         for button in self.inv_buttons.values():
             button["state"] = "normal"
         self.inv_build_load_button["state"] = "normal"
@@ -880,10 +894,18 @@ class Match:
         Setups the food window.
         """
 
+        self.food_window.title("Food")
+
+        if self.food_buttons_disabled:
+            state = "disabled"
+        else:
+            state = "normal"
+
         for current_food in food.food_dict.values():
             button = tkinter.Button(master=self.food_window, text=current_food.name)
             button.food = current_food
             button.bind("<Button-1>", self.use_food_button_onclick)
+            button["state"] = state
             button.pack()
             self.food_buttons[current_food.identifier] = button
 
@@ -891,6 +913,11 @@ class Match:
         """
         Disables the food buttons.
         """
+
+        self.food_buttons_disabled = True
+
+        if self.food_window is None:
+            return
 
         for button in self.food_buttons.values():
             button["state"] = "disabled"
@@ -900,6 +927,11 @@ class Match:
         Enables the food buttons.
         """
 
+        self.food_buttons_disabled = False
+
+        if self.food_window is None:
+            return
+
         for button in self.food_buttons.values():
             if button.food.max_uses - self.player.food_used_dict.get(button.food.identifier, 0) == 0:
                 button["state"] = "disabled"
@@ -907,8 +939,8 @@ class Match:
                 button["state"] = "normal"
 
     def on_dragon_element_window_closed(self):
-        self.pet_dragon_element_window_open = False
         self.pet_dragon_element_window.destroy()
+        self.pet_dragon_element_window = None
 
     def change_dragon_element_onclick(self, event):
         if not isinstance(self.pet, pets.PetKidDragon):
@@ -921,7 +953,7 @@ class Match:
         self.update_rotation_log(f"Change dragon element to {event.widget.element}", double_turn=True)
 
     def open_dragon_element_window_onclick(self, event):
-        if self.pet_dragon_element_window_open:
+        if self.pet_dragon_element_window is not None:
             return
         self.pet_dragon_element_window = tkinter.Toplevel()
         self.pet_dragon_element_window.protocol("WM_DELETE_WINDOW", self.on_dragon_element_window_closed)
@@ -932,7 +964,27 @@ class Match:
             button.bind("<Button-1>", self.change_dragon_element_onclick)
             button.grid(row=index, column=0)
 
-        self.pet_dragon_element_window_open = True
+    def on_inv_window_closed(self):
+        self.inv_window.destroy()
+        self.inv_window = None
+
+    def open_inv_window_onclick(self, event):
+        if self.inv_window is not None:
+            return
+        self.inv_window = tkinter.Toplevel()
+        self.inv_window.protocol("WM_DELETE_WINDOW", self.on_inv_window_closed)
+        self.setup_inv_window()
+
+    def on_food_window_closed(self):
+        self.food_window.destroy()
+        self.food_window = None
+
+    def open_food_window_onclick(self, event):
+        if self.food_window is not None:
+            return
+        self.food_window = tkinter.Toplevel()
+        self.food_window.protocol("WM_DELETE_WINDOW", self.on_food_window_closed)
+        self.setup_window_food()
 
     def setup_window_player(self):
         """
@@ -960,21 +1012,34 @@ class Match:
             button.grid(row=0, column=i)
             self.buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
 
-        back_button = tkinter.Button(master=self.window, text="Back")
+        self.extra_buttons_frame = tkinter.Frame(master=self.window)
+        self.extra_buttons_frame.grid(row=0, column=len(self.buttons))
+
+        back_button = tkinter.Button(master=self.extra_buttons_frame, text="Back")
         back_button.bind("<Button-1>", self.rollback)
-        back_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS), padx=5, pady=5)
-        self.buttons["Back"] = (back_button, back_button.grid_info())
-        self.buttons["Back"][0]["state"] = "disabled"
+        back_button.grid(row=0, column=0, padx=5, pady=2)
+        self.extra_buttons["Back"] = (back_button, back_button.grid_info())
+        self.extra_buttons["Back"][0]["state"] = "disabled"
 
-        dragon_element_button = tkinter.Button(master=self.window, text="Dragon Element")
-        dragon_element_button.bind("<Button-1>", self.open_dragon_element_window_onclick)
-        dragon_element_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 1, padx=5, pady=5)
-        self.buttons["Dragon_Element"] = (dragon_element_button, dragon_element_button.grid_info())
-
-        export_button = tkinter.Button(master=self.window, text="Export")
+        export_button = tkinter.Button(master=self.extra_buttons_frame, text="Export")
         export_button.bind("<Button-1>", self.export_onclick)
-        export_button.grid(row=0, column=len(constants.KEYBOARD_CONTROLS) + 2, padx=5, pady=5)
-        self.buttons["Export"] = (export_button, export_button.grid_info())
+        export_button.grid(row=2, column=0, padx=5, pady=2)
+        self.extra_buttons["Export"] = (export_button, export_button.grid_info())
+
+        dragon_element_button = tkinter.Button(master=self.extra_buttons_frame, text="Dragon Element")
+        dragon_element_button.bind("<Button-1>", self.open_dragon_element_window_onclick)
+        dragon_element_button.grid(row=0, column=1, padx=5, pady=2)
+        self.extra_buttons["Dragon_Element"] = (dragon_element_button, dragon_element_button.grid_info())
+
+        open_inv_button = tkinter.Button(master=self.extra_buttons_frame, text="Inventory")
+        open_inv_button.bind("<Button-1>", self.open_inv_window_onclick)
+        open_inv_button.grid(row=1, column=1, padx=5, pady=2)
+        self.extra_buttons["Inventory"] = (open_inv_button, open_inv_button.grid_info())
+
+        open_food_window_button = tkinter.Button(master=self.extra_buttons_frame, text="Food")
+        open_food_window_button.bind("<Button-1>", self.open_food_window_onclick)
+        open_food_window_button.grid(row=2, column=1, padx=5, pady=2)
+        self.extra_buttons["Inventory"] = (open_food_window_button, open_food_window_button.grid_info())
 
     def show_window_player(self):
         """
@@ -986,6 +1051,9 @@ class Match:
 
         for button in self.buttons.values():
             button[0].grid(**button[1])
+        self.extra_buttons_frame.grid(row=0, column=len(self.buttons))
+        for extra_button in self.extra_buttons.values():
+            extra_button[0].grid(**extra_button[1])
 
         self.enable_inventory_buttons()
         stuffed = False
@@ -1139,7 +1207,7 @@ class Match:
         self.update_pet_cooldowns()
 
         self.softclear_window()
-        self.buttons["Back"][0]["state"] = "normal"
+        self.extra_buttons["Back"][0]["state"] = "normal"
         self.show_window_player()
         self.update_player_skill_buttons()
         # player.next() Handles DoTs and armor-specific mechanics
@@ -1186,7 +1254,7 @@ class Match:
         :param event: Not used for anything, only exists for binding this function to a button.
         """
 
-        if self.buttons["Back"][0]["state"] == "disabled":
+        if self.extra_buttons["Back"][0]["state"] == "disabled":
             return
         self.player_disabled_skills = False
         self.current_turn -= 1
@@ -1206,7 +1274,7 @@ class Match:
         self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         self.update_detail_windows()
         if self.current_turn == 1:
-            self.buttons["Back"][0]["state"] = "disabled"
+            self.extra_buttons["Back"][0]["state"] = "disabled"
 
         log = self.rotation_log_widget.get("1.0", "end")
         log = " -> ".join(log.split(" -> ")[:-2]) + " -> "

@@ -90,6 +90,9 @@ class PetKidDragon(classes.Pet):
         self.available_effects.power_boost = lambda assistance: misc.Effect("Power Boost", "kid_dragon_power_boost", 3, {"boost": 5 + assistance // 10}, {})
         self.available_effects.tickles = lambda mischief: misc.Effect("Tickles", "kid_dragon_tickles", 3, {"boost": -mischief // 10}, {"all": -mischief // 20, "health": mischief // 20})
 
+        # Rollback
+        self.rollback_element = [self.element]
+
     def update_cooldowns_by_cha(self):
         old_cha_cooldown_reduce = self.cha_cooldown_reduce
         self.cha_cooldown_reduce = self.match.player.stats.CHA // 50
@@ -152,3 +155,12 @@ class PetKidDragon(classes.Pet):
 
     def skill_tickles(self):
         self.match.targeted_enemy.add_effect(self.available_effects.tickles(self.stats.mischief))
+
+    def rollback(self):
+        super().rollback()
+        self.element = self.rollback_element[-2]
+        self.rollback_element.pop()
+
+    def update_rollback_data(self):
+        super().update_rollback_data()
+        self.rollback_element.append(self.element)
