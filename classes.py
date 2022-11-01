@@ -978,14 +978,14 @@ class Player(Entity):
         Use an HP potion.
         """
 
-        self.attacked(self.hp_potion_value, "health")
+        self.hp = utilities.clamp(self.hp + self.hp_potion_value, 0, self.max_hp)
 
     def mp_potion(self):
         """
         Use an MP potion.
         """
 
-        self.attacked(-self.mp_potion_value, constants.MANA_ELEMENT, entity=self, mana_attack=True)
+        self.mp = utilities.clamp(self.mp + self.mp_potion_value, 0, self.max_mp)
 
     def next(self):
         """

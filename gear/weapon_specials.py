@@ -147,7 +147,7 @@ def _doom_blade_of_sorrows_on_hit(match, entity, damage):
 
 def _blade_of_awe_on_hit(match, entity, damage):
     match.player.attacked(0.04 * match.player.max_hp, "health", entity=match.player)
-    match.player.attacked(0.04 * match.player.max_mp, "mana", entity=match.player, mana_attack=True)
+    match.player.mp = utilities.clamp(match.player.mp + 0.04 * match.player.max_mp, 0, match.player.max_mp)
     return damage
 
 
@@ -157,7 +157,7 @@ def _frostval_weapon_on_hit(match, entity, damage):
 
 
 def _the_quadstaff_on_hit(match, entity, damage):
-    match.player.attacked(match.player.level * 0.75, "mana", entity=match.player, mana_attack=True)
+    match.player.mp = utilities.clamp(match.player.mp + match.player.level * 0.75, 0, match.player.max_mp)
     return damage
 
 
@@ -168,7 +168,7 @@ def _twillys_staff_on_hit(match, entity, damage):
 
 
 def _warlics_gift_on_hit(match, entity, damage):
-    match.player.attacked(0.08 * match.player.max_mp, "mana", entity=match.player, mana_attack=True)
+    match.player.mp = utilities.clamp(match.player.mp + 0.08 * match.player.max_mp, 0, match.player.max_mp)
     return damage
 
 

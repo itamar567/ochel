@@ -335,7 +335,7 @@ class Technomancer(classes.Player):
 
         self.heat_level = min(self.heat_level + 1, 20)
         self.old_mp = self.mp
-        self.attacked(self.heat_level, "mana", entity=self, mana_attack=True)
+        self.mp = utilities.clamp(self.mp - self.heat_level, 0, self.max_mp)
         self.match.update_player_skill_buttons()
         self.match.update_detail_windows()
 
@@ -390,7 +390,7 @@ class Technomancer(classes.Player):
         self.add_effect(self.available_effects.magnetic_personality(0.05 * self.max_hp))
 
     def skill_mana_eruption(self):
-        self.attacked(-0.2 * self.max_mp, "mana", entity=self)
+        self.mp = utilities.clamp(self.mp + 0.2 * self.max_mp, 0, self.max_mp)
         mp_percent = (self.mp / self.max_mp) * 100
         self.attack(self.match.targeted_enemy, damage_additive=1.5 * mp_percent)
 
