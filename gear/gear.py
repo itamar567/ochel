@@ -17,7 +17,7 @@ class Item:
 
 
 class Trinket(Item):
-    def __init__(self, name, identifier, bonuses, resists, ability_func=None, ability_mana_cost=0, ability_cooldown=0, ability_name="", ability_img_path=None):
+    def __init__(self, name, identifier, bonuses, resists, ability_func=None, ability_mana_cost=0, ability_cooldown=0, ability_name="", ability_img_name=None):
         """
         Creates a trinket
         :param name: The trinket's name
@@ -32,10 +32,11 @@ class Trinket(Item):
         self.ability_mana_cost = ability_mana_cost
         self.ability_cooldown = ability_cooldown
         self.ability_name = ability_name
-        if ability_img_path is None:
-            self.ability_img_path = f"images/trinkets/{identifier}.png"
+        self.ability_img_path = "resources/images/trinkets/"
+        if ability_img_name is None:
+            self.ability_img_path += f"{identifier}.png"
         else:
-            self.ability_img_path = ability_img_path
+            self.ability_img_path += f"{ability_img_name}.png"
 
 
 class Weapon(Item):
@@ -47,16 +48,44 @@ class Weapon(Item):
 
 
 class Gear:
-    path = os.path.expanduser('~')  # Home directory
-    if sys.platform == "win32":
-        path += "/AppData/Roaming"
-    elif sys.platform == "linux":
-        path += "/.local/share"
-    elif sys.platform == "darwin":
-        path += "/Library/Application Support"
-    else:
-        path = os.path.dirname(os.path.abspath(sys.argv[0]))  # The directory the program was executed in
-    path += "/OCHEL"
+    path = ""
+    all_items_in_resources_by_slot = {}
+    all_items_in_resources_by_id = {}
+    max_lvl_items_in_resources_by_slot = {}
+    max_lvl_items_in_resources_by_id = {}
+    only_max_lvl_items = True
+
+    @staticmethod
+    def setup():
+        # Setup the app data path
+        Gear.path = os.path.expanduser('~')  # Home directory
+        if sys.platform == "win32":
+            Gear.path += "/AppData/Roaming"
+        elif sys.platform == "linux":
+            Gear.path += "/.local/share"
+        elif sys.platform == "darwin":
+            Gear.path += "/Library/Application Support"
+        else:
+            Gear.path = os.path.dirname(os.path.abspath(sys.argv[0]))  # The directory the program was executed in
+        Gear.path += "/OCHEL"
+
+        # Setup items_in_resources_by_slot and items_in_resources_by_id
+        for slot in constants.INVENTORY_SLOTS:
+            if slot == constants.SLOT_WEAPON_SPECIAL:
+                continue
+
+            Gear.all_items_in_resources_by_slot[slot] = []
+            Gear.max_lvl_items_in_resources_by_slot[slot] = []
+
+            for item_dict in sorted(json.load(open(f"resources/items/all/{slot}.json", "r")), key=lambda item: item["name"]):
+                item = Gear.dict_to_item(item_dict, slot)
+                Gear.all_items_in_resources_by_slot[slot].append(item)
+                Gear.all_items_in_resources_by_id[item_dict["id"]] = item
+
+            for item_dict in sorted(json.load(open(f"resources/items/max_lvl/{slot}.json", "r")), key=lambda item: item["name"]):
+                item = Gear.dict_to_item(item_dict, slot)
+                Gear.max_lvl_items_in_resources_by_slot[slot].append(item)
+                Gear.max_lvl_items_in_resources_by_id[item_dict["id"]] = item
 
     @staticmethod
     def dict_to_item(item_dict, slot):
@@ -86,7 +115,12 @@ class Gear:
         if slot == constants.SLOT_WEAPON_SPECIAL:
             return weapon_specials[identifier]
 
-        return Gear.load_item_using_path(slot, f"{Gear.path}/{slot}/{identifier}.json")
+        if identifier in Gear.items_in_resources_by_id:
+            item = Gear.items_in_resources_by_id[identifier]
+        else:
+            item = Gear.load_item_using_path(slot, f"{Gear.path}/{slot}/{identifier}.json")
+
+        return item
 
     @staticmethod
     def load_item_using_path(slot, path):
@@ -116,11 +150,16 @@ class Gear:
     def get_gear_list(slot):
         if slot == constants.SLOT_WEAPON_SPECIAL:
             return list(weapon_specials.values())
+        if slot in (constants.SLOT_TRINKET, constants.SLOT_PET):
+            return []
 
         gear_list = []
-
         for item_path in sorted(glob.glob(f"{Gear.path}/{slot}/*.json")):
             gear_list.append(Gear.load_item_using_path(slot, item_path))
+        if Gear.only_max_lvl_items:
+            gear_list.extend(Gear.max_lvl_items_in_resources_by_slot[slot])
+        else:
+            gear_list.extend(Gear.all_items_in_resources_by_slot[slot])
 
         return gear_list
 
@@ -143,3 +182,6 @@ class Gear:
             os.mkdir(f"{Gear.path}/builds/")
 
         json.dump(build, open(f"{Gear.path}/builds/{identifier}.json", "w"))
+
+
+Gear.setup()

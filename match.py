@@ -74,7 +74,8 @@ class AddItemWindow:
         for index, slot in enumerate(constants.INVENTORY_SLOTS):
             if slot == constants.SLOT_WEAPON_SPECIAL:
                 continue
-            button_img = tkinter.PhotoImage(master=self.window, file=utilities.resource_path(f"images/inv_icons/{slot}.png"))
+            button_img = tkinter.PhotoImage(master=self.window, file=utilities.resource_path(
+                f"resources/images/inv_icons/{slot}.png"))
             button = tkinter.Button(master=self.window, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             button.slot = slot
@@ -272,9 +273,9 @@ class Match:
         self.current_turn = 1
 
         # We need to keep a reference to the HP, MP, Skip and Trinket button images, so they won't get garbage-collected by python
-        self.hp_button_img = tkinter.PhotoImage(file=utilities.resource_path("images/hp.png"))
-        self.mp_button_img = tkinter.PhotoImage(file=utilities.resource_path("images/mp.png"))
-        self.skip_button_image = tkinter.PhotoImage(file=utilities.resource_path("images/skip.png"))
+        self.hp_button_img = tkinter.PhotoImage(file=utilities.resource_path("resources/images/hp.png"))
+        self.mp_button_img = tkinter.PhotoImage(file=utilities.resource_path("resources/images/mp.png"))
+        self.skip_button_image = tkinter.PhotoImage(file=utilities.resource_path("resources/images/skip.png"))
         self.trinket_img = None
 
         # Setup inventory window variables
@@ -288,6 +289,10 @@ class Match:
         self.inv_buttons_disabled = False
         self.current_inv_item_list = Gear.get_gear_list(constants.INVENTORY_SLOTS[0])
         self.current_inv_slot_list = [constants.INVENTORY_SLOTS[0]] * len(self.current_inv_item_list)
+        self.items_loaded_in_inv = 0
+        self.only_max_lvl_items_variable = tkinter.BooleanVar()
+        self.only_max_lvl_items_variable.set(True)
+        self.only_max_lvl_items_variable.trace_add("write", self.update_inv_items_on_checkbox_update)
 
         # Setup food window variables
         self.food_window = None
@@ -552,7 +557,7 @@ class Match:
             event.widget.equipped = True
             event.widget["text"] = "Unequip"
 
-    def search_inv_on_entry_update(self, var, index, mode):
+    def search_inv(self):
         text = self.inv_search_entry_var.get().lower()
         item_list = []
         slot_list = []
@@ -562,6 +567,13 @@ class Match:
                     item_list.append(item)
                     slot_list.append(slot)
         self.update_inv_window_by_item_list(item_list, slot_list)
+
+    def search_inv_on_entry_update(self, var, index, mode):
+        self.search_inv()
+
+    def update_inv_items_on_checkbox_update(self, var, index, mode):
+        Gear.only_max_lvl_items = self.only_max_lvl_items_variable.get()
+        self.search_inv()
 
     def setup_inv_window(self):
         self.inv_window.title("Inventory")
@@ -576,7 +588,7 @@ class Match:
 
         self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         for slot in constants.INVENTORY_SLOTS:
-            button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"images/inv_icons/{slot}.png"))
+            button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"resources/images/inv_icons/{slot}.png"))
             button = tkinter.Button(master=upper_frame, image=button_img)
             button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             button.slot = slot
@@ -585,6 +597,8 @@ class Match:
         add_item_button = tkinter.Button(master=upper_frame, text="+")
         add_item_button.bind("<Button-1>", self.add_item_onclick)
         add_item_button.pack(side=tkinter.LEFT)
+        only_max_lvl_items_checkbox = tkinter.Checkbutton(master=upper_frame, text="Max Level Only", variable=self.only_max_lvl_items_variable)
+        only_max_lvl_items_checkbox.pack(side=tkinter.RIGHT)
 
         lower_frame = tkinter.Frame(master=self.inv_window)
         lower_frame.pack(side=tkinter.BOTTOM, anchor=tkinter.W)
@@ -658,11 +672,23 @@ class Match:
         item_list = Gear.get_gear_list(slot)
         self.update_inv_window_by_item_list(item_list, [slot] * len(item_list))
 
-    def update_inv_window_by_item_list(self, item_list, slot_list):
+    def inv_load_more_items(self, event):
+        # Remove the button from the scrolled text widget
+        self.inv_gear_list["state"] = "normal"
+        self.inv_gear_list.delete("end-2c", "end")
+        self.inv_gear_list.insert("end", "\n")
+        self.inv_gear_list["state"] = "disabled"
+
+        self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list, item_limit=self.items_loaded_in_inv + constants.DEFAULT_INV_ITEM_LIMIT, items_already_loaded=self.items_loaded_in_inv, delete_old_items=False)
+
+    def update_inv_window_by_item_list(self, item_list, slot_list, item_limit=constants.DEFAULT_INV_ITEM_LIMIT, items_already_loaded=0, delete_old_items=True):
         """
         Updates the inventory window using an item list and a slot list
         :param item_list: The list of items to show
         :param slot_list: A list of slots, slot_list[i] = slot of item_list[i]
+        :param item_limit: A limit on how many items to display, defaults to constants.DEFAULT_INV_ITEM_LIMIT
+        :param items_already_loaded: How many items are already loaded. Used for updating the item limit, defaults to 0
+        :param delete_old_items: Whether to delete items that were previously loaded or not.
         """
 
         if self.inv_window is None:
@@ -670,10 +696,12 @@ class Match:
 
         self.current_inv_item_list = item_list
         self.current_inv_slot_list = slot_list
+        self.items_loaded_in_inv = min(len(item_list), item_limit)
         self.inv_gear_list.configure(state="normal")
-        self.inv_gear_list.delete("1.0", "end")
-        self.inv_buttons = {}
-        for index in range(len(item_list)):
+        if delete_old_items:
+            self.inv_gear_list.delete("1.0", "end")
+            self.inv_buttons = {}
+        for index in range(items_already_loaded, self.items_loaded_in_inv):
             if item_list[index].identifier in self.player.gear_identifiers:
                 text = "Unequip"
                 equipped = True
@@ -690,7 +718,15 @@ class Match:
             self.inv_buttons[item_list[index].identifier] = button
             self.inv_gear_list.insert("end", f"{item_list[index].name} ")
             self.inv_gear_list.window_create("end", window=button)
+            if index + 1 < self.items_loaded_in_inv:
+                self.inv_gear_list.insert("end", "\n")
+
+        if len(item_list) > item_limit:
             self.inv_gear_list.insert("end", "\n")
+            load_more_items_button = tkinter.Button(master=self.inv_gear_list, text="Load More...")
+            load_more_items_button.bind("<Button-1>", self.inv_load_more_items)
+            self.inv_gear_list.window_create("end", window=load_more_items_button)
+
         self.inv_gear_list.configure(state="disabled")
 
     def update_inv_window_onclick(self, event):
@@ -1013,7 +1049,7 @@ class Match:
             self.buttons[constants.KEYBOARD_CONTROLS[i]] = (button, button.grid_info())
 
         self.extra_buttons_frame = tkinter.Frame(master=self.window)
-        self.extra_buttons_frame.grid(row=0, column=len(self.buttons))
+        self.extra_buttons_frame.grid(row=0, column=len(constants.KEYBOARD_CONTROLS))
 
         back_button = tkinter.Button(master=self.extra_buttons_frame, text="Back")
         back_button.bind("<Button-1>", self.rollback)

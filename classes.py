@@ -113,7 +113,7 @@ class Pet:
         Updates the skill_images dict.
         """
         for skill in self.skills.keys():
-            file_name = "images/"
+            file_name = "resources/images/"
             if skill == " ":
                 file_name += "attack"
             elif skill == "M":
@@ -813,12 +813,15 @@ class Player(Entity):
         self.food_used_list = []
         self.builds_used = [player_values.default_build_id]
         self.gear_used = {}
-        for slot in self.gear.keys():
-            if slot == constants.SLOT_WEAPON_SPECIAL:
-                item_name = self.gear[slot].original_name
+        for slot in constants.SLOTS:
+            if slot in self.gear:
+                if slot == constants.SLOT_WEAPON_SPECIAL:
+                    item_name = self.gear[slot].original_name
+                else:
+                    item_name = self.gear[slot].name
+                self.gear_used[slot] = [item_name]
             else:
-                item_name = self.gear[slot].name
-            self.gear_used[slot] = [item_name]
+                self.gear_used[slot] = []
 
         # If the default gear increased END/WIS, the current hp/mp would be smaller than the max hp/mp
         self.hp = self.max_hp
@@ -1089,7 +1092,7 @@ class Player(Entity):
         Updates the skill_images dict.
         """
         for skill in self.skills.keys():
-            file_name = "images/"
+            file_name = "resources/images/"
             if skill == " ":
                 file_name += "attack"
             elif skill == "N":

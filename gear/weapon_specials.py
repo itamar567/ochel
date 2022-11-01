@@ -11,7 +11,7 @@ class WeaponSpecial:
                  on_attack_func=None, on_attack_chance=0.0):
         self.name = f"{name} (Special)"
         self.original_name = name
-        self.identifier = identifier
+        self.identifier = f"{identifier}_special"
         self.default = default
         self.on_hit_func = on_hit_func
         self.on_hit_apply_time = on_hit_apply_time
@@ -220,44 +220,44 @@ def _vanilla_ice_katana_on_attack(match):
 
 # On-Hit
 # - Racial Triggers
-weapon_specials["dragon_blade"] = WeaponSpecial("Dragon Blade", "dragon_blade", on_hit_chance=1, on_hit_func=_dragon_blade_on_hit, on_hit_bonuses_func=_dragon_blade_on_hit_bonuses)
-weapon_specials["dragonblaser"] = WeaponSpecial("DragonBlaser", "dragonblaser", on_hit_chance=1, on_hit_func=_dragonblaser_on_hit)
-weapon_specials["escelense_blade"] = WeaponSpecial("Escelense Blade", "escelense_blade", on_hit_chance=1, on_hit_func=_escelense_blade_on_hit)
-weapon_specials["zardslayer_blade"] = WeaponSpecial("ZardSlayer Blade", "zardslayer_blade", on_hit_chance=1, on_hit_func=_zardslayer_blade_on_hit)
-weapon_specials["light_of_destiny"] = WeaponSpecial("Light of Destiny", "light_of_destiny", on_hit_chance=1, on_hit_bonuses_func=_light_of_destiny_on_hit_bonuses)
-weapon_specials["spiders_embrace"] = WeaponSpecial("Spider's Embrace", "spiders_embrace", on_hit_chance=1, on_hit_func=_spiders_embrace_on_hit)
-weapon_specials["vile_infused_rose_weapon"] = WeaponSpecial("Vile Infused Rose Weapon", "vile_infused_rose_weapon", on_hit_chance=1, on_hit_func=_vile_infused_rose_weapon_on_hit)
+weapon_specials["dragon_blade_special"] = WeaponSpecial("Dragon Blade", "dragon_blade", on_hit_chance=1, on_hit_func=_dragon_blade_on_hit, on_hit_bonuses_func=_dragon_blade_on_hit_bonuses)
+weapon_specials["dragonblaser_special"] = WeaponSpecial("DragonBlaser", "dragonblaser", on_hit_chance=1, on_hit_func=_dragonblaser_on_hit)
+weapon_specials["escelense_blade_special"] = WeaponSpecial("Escelense Blade", "escelense_blade", on_hit_chance=1, on_hit_func=_escelense_blade_on_hit)
+weapon_specials["zardslayer_blade_special"] = WeaponSpecial("ZardSlayer Blade", "zardslayer_blade", on_hit_chance=1, on_hit_func=_zardslayer_blade_on_hit)
+weapon_specials["light_of_destiny_special"] = WeaponSpecial("Light of Destiny", "light_of_destiny", on_hit_chance=1, on_hit_bonuses_func=_light_of_destiny_on_hit_bonuses)
+weapon_specials["spiders_embrace_special"] = WeaponSpecial("Spider's Embrace", "spiders_embrace", on_hit_chance=1, on_hit_func=_spiders_embrace_on_hit)
+weapon_specials["vile_infused_rose_weapon_special"] = WeaponSpecial("Vile Infused Rose Weapon", "vile_infused_rose_weapon", on_hit_chance=1, on_hit_func=_vile_infused_rose_weapon_on_hit)
 
 # - Extra Damage
-weapon_specials["lucky_hammer"] = WeaponSpecial("Lucky Hammer", "lucky_hammer", on_hit_chance=1, on_hit_bonuses_func=_lucky_hammer_on_hit_bonuses)
-weapon_specials["pandoras_scythe"] = WeaponSpecial("Pandora's Scythe", "pandoras_scythe", on_hit_chance=5/100, on_hit_func=_pandoras_scythe_on_hit, on_hit_messages=["Pandora's Scythe flares!"])
-weapon_specials["ruby_spike"] = WeaponSpecial("Ruby Spike", "ruby_spike", on_hit_chance=15/100, on_hit_func=_ruby_spike_on_hit)
-weapon_specials["thorn_replica"] = WeaponSpecial("Thorn Replica", "thorn_replica", on_hit_chance=1, on_hit_bonuses_func=_thorn_replica_on_hit_bonuses)
+weapon_specials["lucky_hammer_special"] = WeaponSpecial("Lucky Hammer", "lucky_hammer", on_hit_chance=1, on_hit_bonuses_func=_lucky_hammer_on_hit_bonuses)
+weapon_specials["pandoras_scythe_special"] = WeaponSpecial("Pandora's Scythe", "pandoras_scythe", on_hit_chance=5/100, on_hit_func=_pandoras_scythe_on_hit, on_hit_messages=["Pandora's Scythe flares!"])
+weapon_specials["ruby_spike_special"] = WeaponSpecial("Ruby Spike", "ruby_spike", on_hit_chance=15/100, on_hit_func=_ruby_spike_on_hit)
+weapon_specials["thorn_replica_special"] = WeaponSpecial("Thorn Replica", "thorn_replica", on_hit_chance=1, on_hit_bonuses_func=_thorn_replica_on_hit_bonuses)
 
 # - DoTs
-weapon_specials["destiny_weapon"] = WeaponSpecial("Destiny Weapon", "destiny_weapon", on_hit_chance=5/100, on_hit_func=_destiny_weapon_on_hit, on_hit_messages=["Your foe is infused with Light!"])
-weapon_specials["doom_weapon"] = WeaponSpecial("Doom Weapon", "doom_weapon", on_hit_chance=5/100, on_hit_func=_doom_weapon_on_hit, on_hit_messages=["Doom Weapon: Hahaha!! Engulfed by Darkness!"])
-weapon_specials["fourth_of_july_weapon"] = WeaponSpecial("Fourth of July Weapon", "fourth_of_july_weapon", on_hit_chance=10/100, on_hit_func=_fourth_of_july_weapon_on_hit, on_hit_messages=["Spirit of Liberty!"])
+weapon_specials["destiny_weapon_special"] = WeaponSpecial("Destiny Weapon", "destiny_weapon", on_hit_chance=5/100, on_hit_func=_destiny_weapon_on_hit, on_hit_messages=["Your foe is infused with Light!"])
+weapon_specials["doom_weapon_special"] = WeaponSpecial("Doom Weapon", "doom_weapon", on_hit_chance=5/100, on_hit_func=_doom_weapon_on_hit, on_hit_messages=["Doom Weapon: Hahaha!! Engulfed by Darkness!"])
+weapon_specials["fourth_of_july_weapon_special"] = WeaponSpecial("Fourth of July Weapon", "fourth_of_july_weapon", on_hit_chance=10/100, on_hit_func=_fourth_of_july_weapon_on_hit, on_hit_messages=["Spirit of Liberty!"])
 
 # - (De)buffs
-weapon_specials["amulet_weapon"] = WeaponSpecial("Amulet Weapon", "amulet_weapon", on_hit_chance=10/100, on_hit_func=_amulet_weapon_on_hit, on_hit_messages=["Dragon Magic!!"], on_hit_apply_time=constants.ON_HIT_APPLY_NEXT_TURN)
-weapon_specials["ancient_frost_moglin_weapon"] = WeaponSpecial("Ancient Frost Moglin Weapon", "ancient_frost_moglin_weapon", on_hit_chance=5/100, on_hit_func=_ancient_frost_moglin_weapon_on_hit, on_hit_messages=["The magic of Ancient Frost Moglins reduces your foe's healing!"], on_hit_apply_time=constants.ON_HIT_APPLY_AFTER_HIT)
-weapon_specials["doom_blade_of_sorrows"] = WeaponSpecial("Doom Blade of Sorrows", "doom_blade_of_sorrows", on_hit_chance=5/100, on_hit_func=_doom_blade_of_sorrows_on_hit, on_hit_messages=["Your foe cowers before your power!"])
-weapon_specials["blade_of_destiny_90"] = WeaponSpecial("Blade of Destiny (Level 90)", "blade_of_destiny_90", on_hit_func=_blade_of_destiny_90_on_hit, on_hit_chance=7/100, on_hit_messages=["The light spirit inside your blade shines brightly!"], on_attack_func=_blade_of_destiny_on_attack, on_attack_chance=7/100)
-weapon_specials["hearts_whisper"] = WeaponSpecial("Heart's Whisper", "hearts_whisper", on_hit_chance=5/100, on_hit_func=_hearts_whisper_on_hit, on_hit_messages=["Hearts have been entwined."])
-weapon_specials["ice_scythe"] = WeaponSpecial("Ice Scythe", "ice_scythe", on_hit_func=_ice_scythe_on_hit, on_hit_chance=7/100, on_hit_messages=["The power locked inside the scythe chills your foe!"])
+weapon_specials["amulet_weapon_special"] = WeaponSpecial("Amulet Weapon", "amulet_weapon", on_hit_chance=10/100, on_hit_func=_amulet_weapon_on_hit, on_hit_messages=["Dragon Magic!!"], on_hit_apply_time=constants.ON_HIT_APPLY_NEXT_TURN)
+weapon_specials["ancient_frost_moglin_weapon_special"] = WeaponSpecial("Ancient Frost Moglin Weapon", "ancient_frost_moglin_weapon", on_hit_chance=5/100, on_hit_func=_ancient_frost_moglin_weapon_on_hit, on_hit_messages=["The magic of Ancient Frost Moglins reduces your foe's healing!"], on_hit_apply_time=constants.ON_HIT_APPLY_AFTER_HIT)
+weapon_specials["doom_blade_of_sorrows_special"] = WeaponSpecial("Doom Blade of Sorrows", "doom_blade_of_sorrows", on_hit_chance=5/100, on_hit_func=_doom_blade_of_sorrows_on_hit, on_hit_messages=["Your foe cowers before your power!"])
+weapon_specials["blade_of_destiny_90_special"] = WeaponSpecial("Blade of Destiny (Level 90)", "blade_of_destiny_90", on_hit_func=_blade_of_destiny_90_on_hit, on_hit_chance=7/100, on_hit_messages=["The light spirit inside your blade shines brightly!"], on_attack_func=_blade_of_destiny_on_attack, on_attack_chance=7/100)
+weapon_specials["hearts_whisper_special"] = WeaponSpecial("Heart's Whisper", "hearts_whisper", on_hit_chance=5/100, on_hit_func=_hearts_whisper_on_hit, on_hit_messages=["Hearts have been entwined."])
+weapon_specials["ice_scythe_special"] = WeaponSpecial("Ice Scythe", "ice_scythe", on_hit_func=_ice_scythe_on_hit, on_hit_chance=7/100, on_hit_messages=["The power locked inside the scythe chills your foe!"])
 
 # - Healing
-weapon_specials["blade_of_awe"] = WeaponSpecial("Blade of Awe", "blade_of_awe", on_hit_chance=5/100, on_hit_func=_blade_of_awe_on_hit, on_hit_messages=["Your blade regenerates a small portion of your health and mana!"])
-weapon_specials["frostval_weapon"] = WeaponSpecial("Frostval Weapon", "frostval_weapon", on_hit_chance=5/100, on_hit_func=_frostval_weapon_on_hit)
-weapon_specials["the_quadstaff"] = WeaponSpecial("The Quadstaff", "the_quadstaff", on_hit_chance=5/100, on_hit_func=_the_quadstaff_on_hit, on_hit_messages=["The power of the Quadforce replenishes a small portion of your MP!"])
-weapon_specials["twillys_staff"] = WeaponSpecial("Twilly's Staff", "twillys_staff", on_hit_chance=5/100, on_hit_func=_twillys_staff_on_hit, on_hit_messages=["Moglin Healing Magic!"])
-weapon_specials["warlics_gift"] = WeaponSpecial("Warlic's Gift", "warlics_gift", on_hit_chance=5/100, on_hit_func=_warlics_gift_on_hit, on_hit_messages=["The staff recovers a small portion of your MP."])
+weapon_specials["blade_of_awe_special"] = WeaponSpecial("Blade of Awe", "blade_of_awe", on_hit_chance=5/100, on_hit_func=_blade_of_awe_on_hit, on_hit_messages=["Your blade regenerates a small portion of your health and mana!"])
+weapon_specials["frostval_weapon_special"] = WeaponSpecial("Frostval Weapon", "frostval_weapon", on_hit_chance=5/100, on_hit_func=_frostval_weapon_on_hit)
+weapon_specials["the_quadstaff_special"] = WeaponSpecial("The Quadstaff", "the_quadstaff", on_hit_chance=5/100, on_hit_func=_the_quadstaff_on_hit, on_hit_messages=["The power of the Quadforce replenishes a small portion of your MP!"])
+weapon_specials["twillys_staff_special"] = WeaponSpecial("Twilly's Staff", "twillys_staff", on_hit_chance=5/100, on_hit_func=_twillys_staff_on_hit, on_hit_messages=["Moglin Healing Magic!"])
+weapon_specials["warlics_gift_special"] = WeaponSpecial("Warlic's Gift", "warlics_gift", on_hit_chance=5/100, on_hit_func=_warlics_gift_on_hit, on_hit_messages=["The staff recovers a small portion of your MP."])
 
 # On-Attack
-weapon_specials["aww_weapon"] = WeaponSpecial("Aww Weapon", "aww_weapon", on_attack_func=_aww_weapon_on_attack, on_attack_chance=5/100)
-weapon_specials["creatioux_claw"] = WeaponSpecial("Creatioux Claw", "creatioux_claw", on_attack_func=_creatioux_claw_on_attack, on_attack_chance=33/100)
-weapon_specials["frozen_weapon"] = WeaponSpecial("Frozen Weapon", "frozen_weapon", on_attack_func=_frozen_weapon_on_attack, on_attack_chance=5/100)
-weapon_specials["necrotic_sword_of_doom"] = WeaponSpecial("Necrotic Sword of Doom", "necrotic_sword_of_doom", on_attack_func=_necrotic_sword_of_doom_on_attack, on_attack_chance=5/100)
-weapon_specials["vanilla_ice_katana"] = WeaponSpecial("Vanilla Ice Katana", "vanilla_ice_katana", on_attack_func=_vanilla_ice_katana_on_attack, on_attack_chance=20/100)
-weapon_specials["blade_of_destiny_80"] = WeaponSpecial("Blade of Destiny (Level 80)", "blade_of_destiny_80", on_attack_func=_blade_of_destiny_on_attack, on_attack_chance=20/100)
+weapon_specials["aww_weapon_special"] = WeaponSpecial("Aww Weapon", "aww_weapon", on_attack_func=_aww_weapon_on_attack, on_attack_chance=5/100)
+weapon_specials["creatioux_claw_special"] = WeaponSpecial("Creatioux Claw", "creatioux_claw", on_attack_func=_creatioux_claw_on_attack, on_attack_chance=33/100)
+weapon_specials["frozen_weapon_special"] = WeaponSpecial("Frozen Weapon", "frozen_weapon", on_attack_func=_frozen_weapon_on_attack, on_attack_chance=5/100)
+weapon_specials["necrotic_sword_of_doom_special"] = WeaponSpecial("Necrotic Sword of Doom", "necrotic_sword_of_doom", on_attack_func=_necrotic_sword_of_doom_on_attack, on_attack_chance=5/100)
+weapon_specials["vanilla_ice_katana_special"] = WeaponSpecial("Vanilla Ice Katana", "vanilla_ice_katana", on_attack_func=_vanilla_ice_katana_on_attack, on_attack_chance=20/100)
+weapon_specials["blade_of_destiny_80_special"] = WeaponSpecial("Blade of Destiny (Level 80)", "blade_of_destiny_80", on_attack_func=_blade_of_destiny_on_attack, on_attack_chance=20/100)
