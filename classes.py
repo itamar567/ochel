@@ -266,6 +266,7 @@ class Entity:
         self.general_bonuses["mpm"] = self.stats.LUK // 20
         self.general_bonuses["crit"] = self.stats.LUK // 10
         self.general_bonuses["crit_multiplier"] = 1.75
+        self.general_bonuses["non_crit_multiplier"] = 1
         self.general_bonuses["bonus"] = self.stats.WIS // 10
         self.general_bonuses["boost"] = 0
 
@@ -440,7 +441,7 @@ Effects:"""
         if crit and not glancing:
             damage *= (self.general_bonuses.get("crit_multiplier", 0) + self.gear_bonuses.get("crit_multiplier", 0)) + self.stats.INT / 1000
         else:
-            damage *= (1 + self.stats.STR / 1000)
+            damage *= (self.general_bonuses.get("non_crit_multiplier", 0) + self.gear_bonuses.get("non_crit_multiplier", 0) + self.stats.STR / 1000)
             if glancing:
                 damage *= 0.05
 
