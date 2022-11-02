@@ -54,16 +54,14 @@ def check_if_entities_alive(enemies_list, player):
     return player.hp > 0
 
 
-# TODO: fix edge cases (e.g. if 2 mainstats are bigger than the 3rd)
-# TODO: if STR=INT=DEX, set damage type based on base class
 def determine_damage_type_by_stats(entity):
     if entity.stats.STR == entity.stats.INT == entity.stats.DEX:
         return constants.DMG_TYPE_MAGIC
     else:
+        if entity.stats.INT >= entity.stats.STR and entity.stats.INT >= entity.stats.DEX:
+            return constants.DMG_TYPE_MAGIC
         if entity.stats.DEX >= entity.stats.STR and entity.stats.DEX >= entity.stats.INT:
             return constants.DMG_TYPE_PIERCE
-        elif entity.stats.INT >= entity.stats.STR and entity.stats.INT >= entity.stats.DEX:
-            return constants.DMG_TYPE_MAGIC
         else:
             return constants.DMG_TYPE_MELEE
 
