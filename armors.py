@@ -171,7 +171,7 @@ class Chaosweaver(classes.Player):
             current_effect = [even_effect if i % 2 == 0 else odd_effect]
             if current_effect[0] == self.available_effects.shredded_soul() and not stun:
                 current_effect = []
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.2857, inflicts=current_effect)
+            self.attack(self.match.targeted_enemy, damage_multiplier=2/7, inflicts=current_effect)
 
     def skill_soul_assault(self):
         self.add_soulthread()
@@ -206,18 +206,18 @@ class Chaosweaver(classes.Player):
         else:
             effect = self.available_effects.overwhelmed()
         for i in range(19):
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.092, inflicts=[effect])
+            self.attack(self.match.targeted_enemy, damage_multiplier=175/19, inflicts=[effect])
 
     def skill_rebuke(self):
-        damage_multiplier = 1.667
+        damage_multiplier = 5/3
         if self.hp == self.max_hp:
-            damage_multiplier = 0.333
+            damage_multiplier = 1/3
         elif self.hp >= 0.71 * self.max_hp:
-            damage_multiplier = 0.667
+            damage_multiplier = 2/3
         elif self.hp >= 0.41 * self.max_hp:
             damage_multiplier = 1
         elif self.hp >= 0.11 * self.max_hp:
-            damage_multiplier = 1.333
+            damage_multiplier = 4/3
 
         for i in range(3):
             self.attack(self.match.targeted_enemy, damage_multiplier=damage_multiplier)
@@ -424,7 +424,7 @@ class Technomancer(classes.Player):
 
     def skill_mana_burst_grenades(self):
         for i in range(3):
-            self.attack(self.match.targeted_enemy, damage_multiplier=0.33,
+            self.attack(self.match.targeted_enemy, damage_multiplier=1/3,
                         damage_additive=max(round(self.stats.WIS / 3), 5))
 
     def skill_static_overload_blast(self):
