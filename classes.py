@@ -862,6 +862,8 @@ class Player(Entity):
 
         super().recalculate_bonuses(old_stats)
         self.general_resists["immobility"] += -(old_stats.END // 5) + (self.stats.END // 5)
+        if self.match is not None and self.match.pet.armor == "Kid Dragon":
+            self.match.pet.update_cooldowns_by_cha()
 
     def equip(self, slot, item, update_details=True):
         """
@@ -918,8 +920,6 @@ class Player(Entity):
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
-            if self.match is not None and self.match.pet.armor == "Kid Dragon":
-                self.match.pet.update_cooldowns_by_cha()
 
         if update_details:
             self.match.update_detail_windows()
