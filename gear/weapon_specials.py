@@ -141,7 +141,7 @@ def _ancient_frost_moglin_weapon_on_hit(match, entity, damage):
 
 
 def _doom_blade_of_sorrows_on_hit(match, entity, damage):
-    entity.add_effect(misc.Effect("Doomed", "doom_blade_of_sorrows_on_hit_doomed", 2, {"boost": -25}, {}))
+    entity.add_effect(misc.Effect("Doomed", "doom_blade_of_sorrows_on_hit_doomed", 2, {"boost": -20}, {}))
     return damage
 
 
