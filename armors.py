@@ -150,7 +150,7 @@ class Chaosweaver(classes.Player):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.25)
 
     def skill_aggression(self):
-        dot_dpt = utilities.dot_dpt(self, 0.5)
+        dot_dpt = utilities.dot_dpt(self, 0.5, stat=True)
         if self.empowered:
             self.use_soulthread()
             effect = self.available_effects.empowered_mothbitten(self.element, dot_dpt[0], dot_dpt[1])
@@ -237,7 +237,7 @@ class Chaosweaver(classes.Player):
                     and self.match.targeted_enemy.hp <= 0.05 * self.match.targeted_enemy.max_hp):
             effect = self.available_effects.soul_annihilation(self.match.targeted_enemy.hp * self.dot_multiplier)
         else:
-            dot_dpt = utilities.dot_dpt(self, 3)
+            dot_dpt = utilities.dot_dpt(self, 3, stat=True)
             effect = self.available_effects.soul_torn(dot_dpt[0], dot_dpt[1])
         self.attack(self.match.targeted_enemy, damage_multiplier=2, inflicts=[effect])
 

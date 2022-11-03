@@ -115,8 +115,8 @@ class Gear:
         if slot == constants.SLOT_WEAPON_SPECIAL:
             return weapon_specials[identifier]
 
-        if identifier in Gear.items_in_resources_by_id:
-            item = Gear.items_in_resources_by_id[identifier]
+        if identifier in Gear.all_items_in_resources_by_id:
+            item = Gear.all_items_in_resources_by_id[identifier]
         else:
             item = Gear.load_item_using_path(slot, f"{Gear.path}/{slot}/{identifier}.json")
 

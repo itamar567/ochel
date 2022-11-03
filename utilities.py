@@ -75,8 +75,13 @@ def stun_chance(entity):
     return chance(chance_to_stun)
 
 
-def dot_dpt(entity, multiplier):
-    return round(multiplier * entity.damage[0] * entity.dot_multiplier), round(multiplier * entity.damage[1] * entity.dot_multiplier)
+def dot_dpt(entity, multiplier, stat=False):
+    if stat:
+        stat_damage = math.ceil(3.125 * math.sqrt(entity.stats.get_by_dmg_type(entity.dmg_type) / 2.5) - 5)
+    else:
+        stat_damage = 0
+    damage = (round(entity.damage[0] * multiplier) + round(stat_damage * multiplier), round(entity.damage[1] * multiplier) + round(stat_damage * multiplier))
+    return round(entity.dot_multiplier * damage[0]), round(entity.dot_multiplier * damage[1])
 
 
 def num_to_str_with_plus_minus_sign(num):
