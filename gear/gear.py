@@ -4,6 +4,7 @@ import glob
 import sys
 
 import constants
+import utilities
 from gear.weapon_specials import weapon_specials
 
 
@@ -77,12 +78,12 @@ class Gear:
             Gear.all_items_in_resources_by_slot[slot] = []
             Gear.max_lvl_items_in_resources_by_slot[slot] = []
 
-            for item_dict in sorted(json.load(open(f"resources/items/all/{slot}.json", "r")), key=lambda item: item["name"]):
+            for item_dict in sorted(json.load(open(utilities.resource_path(f"resources/items/all/{slot}.json"), "r")), key=lambda item: item["name"]):
                 item = Gear.dict_to_item(item_dict, slot)
                 Gear.all_items_in_resources_by_slot[slot].append(item)
                 Gear.all_items_in_resources_by_id[item_dict["id"]] = item
 
-            for item_dict in sorted(json.load(open(f"resources/items/max_lvl/{slot}.json", "r")), key=lambda item: item["name"]):
+            for item_dict in sorted(json.load(open(utilities.resource_path(f"resources/items/max_lvl/{slot}.json"), "r")), key=lambda item: item["name"]):
                 item = Gear.dict_to_item(item_dict, slot)
                 Gear.max_lvl_items_in_resources_by_slot[slot].append(item)
                 Gear.max_lvl_items_in_resources_by_id[item_dict["id"]] = item
