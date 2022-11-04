@@ -953,6 +953,8 @@ class Player(Entity):
 
         for elem in item.resists.keys():
             self.gear_resists[elem] -= item.resists[elem]
+            if self.gear_resists[elem] == 0:
+                self.gear_resists.pop(elem)
 
         stats_changed = False
         old_stats = self.stats.copy()
@@ -963,6 +965,8 @@ class Player(Entity):
                 self.stats.add_by_str(bonus, -item.bonuses[bonus])
                 continue
             self.gear_bonuses[bonus] -= item.bonuses[bonus]
+            if self.gear_bonuses[bonus] == 0:
+                self.gear_bonuses.pop(bonus)
 
         if stats_changed:
             self.recalculate_bonuses(old_stats)
