@@ -80,7 +80,7 @@ class PetStats:
 
 
 class Pet:
-    def __init__(self, name, player):
+    def __init__(self, name, match, player_level, player_stats):
         """
         :param name: Name of the pet
         :param player: The player
@@ -88,11 +88,11 @@ class Pet:
 
         self.element = None
         self.name = name
-        self.level = player.level
-        self.match = player.match
+        self.level = player_level
+        self.match = match
         self.bonuses = {"crit_multiplier": 1.75}
-        self.damage = (player.stats.CHA//10, player.stats.CHA//10)
-        self.base_damage_cap = math.floor(math.sqrt(player.level) * 100)
+        self.damage = (player_stats.CHA//10, player_stats.CHA//10)
+        self.base_damage_cap = math.floor(math.sqrt(player_level) * 100)
         self.skills = {}
         self.skill_images = {}
         self.skill_names = {}
@@ -243,6 +243,13 @@ class Pet:
     def update_rollback_data(self):
         self.rollback_cooldown.append(self.active_cooldowns.copy())
         self.rollback_waking_up.append(self.waking_up)
+
+
+class PetItem:
+    def __init__(self, name, identifier, pet):
+        self.name = name
+        self.identifier = identifier
+        self.pet = pet
 
 
 class Entity:
@@ -768,7 +775,7 @@ Effects:"""
 
 
 class Player(Entity):
-    def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
+    def __init__(self, name, stats, pet, pet_item, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
         super().__init__(name, stats, level=level, race="human")
 
@@ -779,8 +786,8 @@ class Player(Entity):
         self.base_damage_cap = math.floor(math.sqrt(self.level) * 100)
 
         # Gear
-        self.gear = {}
-        self.gear_identifiers = set()  # Set of all items' identifiers
+        self.gear = {constants.SLOT_PET: pet_item}
+        self.gear_identifiers = {pet_item.identifier}  # Set of all items' identifiers
         self.default_weapon = None
 
         # Potions
@@ -810,6 +817,9 @@ class Player(Entity):
         for slot in gear.keys():
             self.equip(slot, gear[slot], update_details=False)
 
+        if pet.armor == "Kid Dragon":
+            pet.update_cooldowns_by_cha(self.stats.CHA)
+
         self.food_used_dict = {}
         self.food_used_list = []
         self.builds_used = [player_values.default_build_id]
@@ -828,6 +838,8 @@ class Player(Entity):
         self.hp = self.max_hp
         self.mp = self.max_mp
 
+        self.pets = {pet_item.identifier: pet}
+
         # Rollback data
         self.rollback_gear_bonuses = [self.gear_bonuses.copy()]
         self.rollback_gear_resists = [self.gear_resists.copy()]
@@ -843,6 +855,7 @@ class Player(Entity):
         self.rollback_food_used_list = [self.food_used_list.copy()]
         self.rollback_gear_used = [utilities.copy_dict(self.gear_used)]
         self.rollback_builds_used = [self.builds_used.copy()]
+        self.rollback_pets = [pet]
 
     def update_gear_used(self):
         for slot, item in self.gear.items():
@@ -863,7 +876,7 @@ class Player(Entity):
         super().recalculate_bonuses(old_stats)
         self.general_resists["immobility"] += -(old_stats.END // 5) + (self.stats.END // 5)
         if self.match is not None and self.match.pet.armor == "Kid Dragon":
-            self.match.pet.update_cooldowns_by_cha()
+            self.match.pet.update_cooldowns_by_cha(self.stats.CHA)
 
     def equip(self, slot, item, update_details=True):
         """
@@ -879,12 +892,15 @@ class Player(Entity):
         if self.gear.get(slot, None) == item:
             return
         self.unequip(slot, ignore_default_item=True, update_details=False)
-        if slot == constants.SLOT_PET:
-            self.match.pet = item
-            self.match.pet.waking_up = True
-            return
         self.gear[slot] = item
         self.gear_identifiers.add(item.identifier)
+        if slot == constants.SLOT_PET:
+            if item.identifier in self.pets.keys():
+                self.match.pet = self.pets[item.identifier]
+            else:
+                self.match.pet = item.pet(player_values.pet_dragon_name, self.match, self.level, self.stats, self.match.pet_stats)
+            self.match.pet.waking_up = True
+            return
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
             self.on_hit_special_func = item.on_hit_func
@@ -933,13 +949,13 @@ class Player(Entity):
         :param update_details: Whether to update the detail window or not.
         """
 
-        if slot == constants.SLOT_PET:
-            self.match.pet = None
-            return
         item = self.gear.pop(slot, None)
         if item is None:  # item isn't equipped
             return
         self.gear_identifiers.remove(item.identifier)
+        if slot == constants.SLOT_PET:
+            self.match.pet = None
+            return
 
         if slot == constants.SLOT_WEAPON_SPECIAL:
             self.on_hit_special_func = None
@@ -1022,6 +1038,7 @@ class Player(Entity):
         self.rollback_food_used_list.append(self.food_used_list.copy())
         self.rollback_gear_used.append(utilities.copy_dict(self.gear_used))
         self.rollback_builds_used.append(self.builds_used.copy())
+        self.rollback_pets.append(self.match.pet)
 
     def use_skill_button_onclick(self, event, attack_name=None):
         """
@@ -1113,6 +1130,9 @@ class Player(Entity):
         Rollbacks the player one turn back.
         """
 
+        if self.match.pet is not None:
+            self.match.pet.rollback()
+
         to_unequip = []
         for slot in self.gear.keys():
             if self.gear[slot] == self.rollback_gear[-2].get(slot, None):
@@ -1145,6 +1165,10 @@ class Player(Entity):
         self.rollback_builds_used.pop()
         self.gear_used = utilities.copy_dict(self.rollback_gear_used[-2])
         self.rollback_gear_used.pop()
+        self.match.pet = self.rollback_pets[-2]
+        self.rollback_pets.pop()
+        if self.match.pet is not None:
+            self.match.pet.waking_up = False
 
 
 class Enemy(Entity):

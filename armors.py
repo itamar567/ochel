@@ -10,9 +10,9 @@ from gear import weapons
 
 
 class Chaosweaver(classes.Player):
-    def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
+    def __init__(self, name, stats, pet, pet_item, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
-        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
+        super().__init__(name, stats, pet, pet_item, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
 
         self.armor = "Chaosweaver"
         self.default_weapon = weapons.weaver_blade
@@ -248,9 +248,9 @@ class Chaosweaver(classes.Player):
 
 
 class Technomancer(classes.Player):
-    def __init__(self, name, stats, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
+    def __init__(self, name, stats, pet, pet_item, level=constants.MAX_LEVEL, hp_potion_level=constants.HP_POTION_MAX_LEVEL,
                  mp_potion_level=constants.MP_POTION_MAX_LEVEL, gear=None):
-        super().__init__(name, stats, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
+        super().__init__(name, stats, pet, pet_item, level=level, hp_potion_level=hp_potion_level, mp_potion_level=mp_potion_level, gear=gear)
 
         self.armor = "Technomancer"
         self.heat_level = 0

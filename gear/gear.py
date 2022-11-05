@@ -4,6 +4,7 @@ import glob
 import sys
 
 import constants
+import match_constants
 import utilities
 from gear.weapon_specials import weapon_specials
 
@@ -50,6 +51,7 @@ class Weapon(Item):
 
 class Gear:
     path = ""
+    ELEMENT_FILE_PATH = ""
     all_items_in_resources_by_slot = {}
     all_items_in_resources_by_id = {}
     max_lvl_items_in_resources_by_slot = {}
@@ -70,9 +72,11 @@ class Gear:
             Gear.path = os.path.dirname(os.path.abspath(sys.argv[0]))  # The directory the program was executed in
         Gear.path += "/OCHEL"
 
+        Gear.ELEMENT_FILE_PATH = f"{Gear.path}/data/dragon_element.txt"
+
         # Setup items_in_resources_by_slot and items_in_resources_by_id
         for slot in constants.INVENTORY_SLOTS:
-            if slot == constants.SLOT_WEAPON_SPECIAL:
+            if slot in (constants.SLOT_WEAPON_SPECIAL, constants.SLOT_PET):
                 continue
 
             Gear.all_items_in_resources_by_slot[slot] = []
@@ -151,7 +155,9 @@ class Gear:
     def get_gear_list(slot):
         if slot == constants.SLOT_WEAPON_SPECIAL:
             return list(weapon_specials.values())
-        if slot in (constants.SLOT_TRINKET, constants.SLOT_PET):
+        if slot == constants.SLOT_PET:
+            return match_constants.PETS_LIST
+        if slot == constants.SLOT_TRINKET:
             return []
 
         gear_list = []

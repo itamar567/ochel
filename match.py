@@ -72,7 +72,7 @@ class AddItemWindow:
         self.resists_entry = None
 
         for index, slot in enumerate(constants.INVENTORY_SLOTS):
-            if slot == constants.SLOT_WEAPON_SPECIAL:
+            if slot in (constants.SLOT_WEAPON_SPECIAL, constants.SLOT_PET):
                 continue
             button_img = tkinter.PhotoImage(master=self.window, file=utilities.resource_path(
                 f"resources/images/inv_icons/{slot}.png"))
@@ -259,7 +259,7 @@ class Match:
 
         # Setup enemies and player
         self.player_disabled_skills = False  # If True, all player skills (except rollback) will be disabled
-        self.stats, self.pet_stats, self.trinket, self.player, self.enemies = self.choose_match_data()
+        self.stats, self.pet_stats, self.trinket, self.player, self.enemies, self.pet = self.choose_match_data()
         if not self.is_running:
             return
         self.enemies_alive = self.enemies.copy()
@@ -301,8 +301,7 @@ class Match:
         # Setup dragon element window variables
         self.pet_dragon_element_window = None
 
-        # Setup main window and pet
-        self.pet = pets.PetKidDragon(player_values.pet_dragon_name, self.player, self.pet_stats)
+        # Setup main window
         self.setup_window_pet()
         self.softclear_window()
         self.setup_window_player()
@@ -389,6 +388,7 @@ class Match:
         trinket = None
         armor = None
         enemies = []
+        pet = None
         data_dir_path = f"{Gear.path}/data"
         autofill_file_path = f"{data_dir_path}/autofill.json"
 
@@ -398,6 +398,7 @@ class Match:
             nonlocal trinket
             nonlocal armor
             nonlocal enemies
+            nonlocal pet
             nonlocal finished
 
             finished = True
@@ -410,14 +411,23 @@ class Match:
 
             trinket = trinkets[trinket_id_var.get()]
 
-            player_gear = Gear.get_build(player_values.default_build_id)
-            player_gear[constants.SLOT_TRINKET] = trinket
-            armor_index = armor_index_var.get()
-            armor = match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, player_stats.copy(), level=player_values.level, gear=player_gear)
-
             challenge_index = challenge_index_var.get()
             for enemy in match_constants.ENEMIES_LIST[challenge_index][1]:
                 enemies.append(enemy(level=player_values.level))
+
+            pet_item = match_constants.PETS_LIST[0]
+            pet = pet_item.pet(player_values.pet_dragon_name, self, player_values.level, player_stats, pet_stats)
+            if pet.armor == "Kid Dragon":
+                if os.path.exists(Gear.ELEMENT_FILE_PATH):
+                    pet.element = open(Gear.ELEMENT_FILE_PATH, "r").read()
+                else:
+                    pet.element = "fire"
+                    open(Gear.ELEMENT_FILE_PATH, "w").write(pet.element)
+
+            player_gear = Gear.get_build(player_values.default_build_id)
+            player_gear[constants.SLOT_TRINKET] = trinket
+            armor_index = armor_index_var.get()
+            armor = match_constants.PLAYER_ARMOR_LIST[armor_index][1](player_values.name, player_stats.copy(), pet, pet_item, level=player_values.level, gear=player_gear)
 
             # Save data for autofill
             autofill_dict = {"player": player_stats_list, "pet": pet_stats_list, "trinket": trinket.identifier, "armor": armor_index, "enemies": challenge_index}
@@ -536,7 +546,7 @@ class Match:
         # If the user closed the window, we will return the empty values and exit __init__ afterwards
         if self.is_running:
             self.clear_window()
-        return player_stats, pet_stats, trinket, armor, enemies
+        return player_stats, pet_stats, trinket, armor, enemies, pet
 
     def equip_item_onclick(self, event):
         if event.widget["state"] == "disabled":
@@ -588,9 +598,12 @@ class Match:
 
         self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         for slot in constants.INVENTORY_SLOTS:
-            button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"resources/images/inv_icons/{slot}.png"))
-            button = tkinter.Button(master=upper_frame, image=button_img)
-            button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
+            if slot == constants.SLOT_PET:
+                button = tkinter.Button(master=upper_frame, text="Pets")
+            else:
+                button_img = tkinter.PhotoImage(master=upper_frame, file=utilities.resource_path(f"resources/images/inv_icons/{slot}.png"))
+                button = tkinter.Button(master=upper_frame, image=button_img)
+                button.img = button_img  # We need to keep a reference to the button image, so it won't get garbage-collected by python
             button.slot = slot
             button.bind("<Button-1>", self.update_inv_window_onclick)
             button.pack(side=tkinter.LEFT)
@@ -982,7 +995,7 @@ class Match:
         if not isinstance(self.pet, pets.PetKidDragon):
             return
         self.pet.element = event.widget.element
-        file = open(pets.PetKidDragon.ELEMENT_FILE_PATH, "w")
+        file = open(Gear.ELEMENT_FILE_PATH, "w")
         file.write(event.widget.element)
         file.close()
         self.update_main_log(f"{self.pet.name}'s element changed to {event.widget.element}")
@@ -1105,6 +1118,7 @@ class Match:
         """
 
         self.window.title("Choose Pet Skill:")
+        self.pet_buttons = {}
 
         for i in range(len(constants.KEYBOARD_CONTROLS)):
             if constants.KEYBOARD_CONTROLS[i] == "M":
@@ -1196,26 +1210,28 @@ class Match:
         """
 
         self.update_detail_windows()
-        if self.pet is None:
-            self.next()
-        if self.pet.waking_up:
-            self.pet.waking_up = False
-            self.next()
 
         # Check if enemies died on the player turn
         for enemy in self.enemies_alive.copy():
             if enemy.hp == 0:
                 self.on_death(enemy)
 
+        if self.pet is None:
+            self.next()
+            return
+        if self.pet.waking_up:
+            self.update_main_log(f"{self.pet.name} is immobilized by Waking Up")
+            self.pet.waking_up = False
+            self.setup_window_pet()
+            self.next()
+            return
+
         self.disable_food_buttons()
         self.disable_inventory_buttons()
-        if len(self.pet.skills.keys()) > len(["Attack", "Skip"]):
+        if not self.pet.waking_up:
             self.softclear_window()
             self.update_pet_skill_buttons()
             self.show_window_pet()
-        else:
-            self.pet.skills[" "][1]()  # use attack skill
-            self.next()
 
     def next(self):
         """
@@ -1240,7 +1256,6 @@ class Match:
         self.current_turn += 1
         self.update_effects()
         self.update_player_cooldowns()
-        self.update_pet_cooldowns()
 
         self.softclear_window()
         self.extra_buttons["Back"][0]["state"] = "normal"
@@ -1251,6 +1266,9 @@ class Match:
             self.update_main_log(f"{self.player.name} is immobilized", "p_comment")
         for entity in self.entities:
             entity.update_rollback_data()
+        if self.pet is not None:
+            self.pet.update_rollback_data()
+            self.update_pet_cooldowns()
         self.rollback_targeted_enemy.append(self.targeted_enemy)
         self.rollback_enemies_alive.append(self.enemies_alive)
         self.update_targeted_enemy_buttons()
@@ -1296,7 +1314,6 @@ class Match:
         self.current_turn -= 1
         for entity in self.entities:
             entity.rollback()
-        self.pet.rollback()
 
         self.targeted_enemy = self.rollback_targeted_enemy[-2]
         self.rollback_targeted_enemy.pop()
@@ -1304,9 +1321,14 @@ class Match:
         self.rollback_enemies_alive.pop()
         self.update_targeted_enemy_buttons()
         self.update_player_cooldowns(reduce_cooldowns=False)
-        self.update_pet_cooldowns(reduce_cooldowns=False)
+        if self.pet is not None:
+            # Setup the pet buttons
+            self.update_pet_cooldowns(reduce_cooldowns=False)
+            self.setup_window_pet()
+            self.softclear_window()
+            self.show_window_player()
+
         self.update_player_skill_buttons()
-        self.update_pet_skill_buttons()
         self.update_inv_window_by_item_list(self.current_inv_item_list, self.current_inv_slot_list)
         self.update_detail_windows()
         if self.current_turn == 1:

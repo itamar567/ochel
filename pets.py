@@ -6,23 +6,13 @@ import constants
 import misc
 import player_values
 import utilities
-from gear.gear import Gear
 
 
 class PetKidDragon(classes.Pet):
-    ELEMENT_FILE_PATH = f"{Gear.path}/data/dragon_element.txt"
+    def __init__(self, name, match, player_level, player_stats, pet_stats):
+        super().__init__(name, match, player_level, player_stats)
 
-    def __init__(self, name, player, stats):
-        super().__init__(name, player)
-
-        if os.path.exists(self.ELEMENT_FILE_PATH):
-            self.element = open(self.ELEMENT_FILE_PATH, "r").read()
-        else:
-            self.element = "fire"
-            open(self.ELEMENT_FILE_PATH, "w").write(self.element)
-
-        self.enemies = player.match.enemies
-        self.stats = stats
+        self.stats = pet_stats
         self.bonuses = {"crit_multiplier": 1.75, "bonus": math.floor(20 + self.level * 0.5), "crit": 10}
         self.damage = (self.damage[0] + math.ceil((self.level * 0.85 - self.level / 9) * 1.1),
                        self.damage[1] + math.ceil((self.level * 0.85 + self.level / 9) * 1.1))
@@ -77,7 +67,6 @@ class PetKidDragon(classes.Pet):
                 self.skill_names["6"] = "Scale"
                 self.cooldowns["6"] = 19
 
-        self.update_cooldowns_by_cha()
         self.update_skill_images()
 
         # Effects
@@ -93,9 +82,9 @@ class PetKidDragon(classes.Pet):
         # Rollback
         self.rollback_element = [self.element]
 
-    def update_cooldowns_by_cha(self):
+    def update_cooldowns_by_cha(self, cha):
         old_cha_cooldown_reduce = self.cha_cooldown_reduce
-        self.cha_cooldown_reduce = self.match.player.stats.CHA // 50
+        self.cha_cooldown_reduce = cha // 50
         for skill in self.cooldowns.keys():
             self.cooldowns[skill] = max(self.cooldowns[skill] - self.cha_cooldown_reduce + old_cha_cooldown_reduce, 0)
 
@@ -164,3 +153,54 @@ class PetKidDragon(classes.Pet):
     def update_rollback_data(self):
         super().update_rollback_data()
         self.rollback_element.append(self.element)
+
+
+class BabyChimera(classes.Pet):
+    def __init__(self, name, match, player_level, player_stats, pet_stats):
+        super().__init__("Baby Chimera", match, player_level, player_stats)
+
+        self.element = "nature"
+        self.turn = 0
+        self.skills = {" ": self.skill_attack, "M": lambda: None}
+        self.skill_names = {" ": "Attack", "M": "Skip"}
+        self.cooldowns = {" ": 0}
+        self.armor = "Baby Chimera"
+        self.update_skill_images()
+
+        avg_damage = player_level * (2 / 5)
+        if math.ceil(avg_damage - 10) < 1:
+            self.damage = (1, math.ceil(avg_damage + 10))
+        else:
+            self.damage = (math.ceil(avg_damage - 10), math.ceil(avg_damage + 10))
+
+        # Effects
+        self.available_effects.chimeric_defense = lambda cha: misc.Effect("Chimeric Defense", "baby_chimera_chimeric_defense", 3, {"bpd": math.ceil(self.match.player.level + cha / 4)}, {})
+        self.available_effects.tiny_fireworks = lambda: misc.Effect("Tiny Fireworks", "baby_chimera_tiny_fireworks", 1, {}, {}, dot=misc.DoT(0.75 * self.damage[0], 0.75 * self.damage[1], "fire", self))
+
+        # Rollback
+        self.rollback_element = [self.element]
+
+    def skill_attack(self):
+        self.turn += 1
+
+        if self.turn % 16 == 1:
+            self.skill_1()
+        elif utilities.chance(0.8):
+            self.skill_2()
+        else:
+            self.skill_3()
+
+    def skill_1(self):
+        self.match.player.add_effect(self.available_effects.chimeric_defense(self.match.player.stats.CHA))
+
+    def skill_2(self):
+        for i in range(3):
+            self.attack(self.match.targeted_enemy, dmg_type=constants.DMG_TYPE_MELEE)
+
+    def skill_3(self):
+        old_element = self.element
+        self.element = "fire"
+        for i in range(3):
+            if self.attack(self.match.targeted_enemy, dmg_type=constants.DMG_TYPE_MELEE) == constants.ATTACK_CODE_SUCCESS:
+                self.match.targeted_enemy.add_effect(self.available_effects.tiny_fireworks())
+        self.element = old_element
