@@ -97,6 +97,8 @@ class PetKidDragon(classes.Pet):
         old_cha_cooldown_reduce = self.cha_cooldown_reduce
         self.cha_cooldown_reduce = self.match.player.stats.CHA // 50
         for skill in self.cooldowns.keys():
+            if skill == " ":
+                continue
             self.cooldowns[skill] = max(self.cooldowns[skill] - self.cha_cooldown_reduce + old_cha_cooldown_reduce, 0)
 
     def skill_attack(self):
