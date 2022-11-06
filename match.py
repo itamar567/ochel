@@ -559,10 +559,21 @@ class Match:
 
     def search_inv(self):
         text = self.inv_search_entry_var.get().lower()
+        only_equipped = False
+        if ">equip" in text:
+            only_equipped = True
+            text = text.replace(">equip ", "").replace(">equip", "")
         item_list = []
         slot_list = []
         for slot in constants.INVENTORY_SLOTS:
-            for item in Gear.get_gear_list(slot):
+            if only_equipped:
+                if slot in self.player.gear.keys():
+                    gear_list = [self.player.gear[slot]]
+                else:
+                    gear_list = []
+            else:
+                gear_list = Gear.get_gear_list(slot)
+            for item in gear_list:
                 if text in item.name.lower():
                     item_list.append(item)
                     slot_list.append(slot)
