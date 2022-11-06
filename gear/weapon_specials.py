@@ -105,6 +105,14 @@ def _light_of_ebil_dread_on_hit_bonuses(match, entity):
     return {"non_crit_multiplier": 0.05}
 
 
+def _roliths_backup_hammer_on_hit_bonuses(match, entity):
+    utilities.add_value(match.on_hit_data, "roliths_backup_hammer", 1)
+    if match.on_hit_data["roliths_backup_hammer"] == 10:
+        match.on_hit_data["roliths_backup_hammer"] = 0
+        return {"crit": 200}
+    return {}
+
+
 def _destiny_weapon_on_hit(match, entity, damage):
     dot_dpt = utilities.dot_dpt(match.player, 0.2)
     entity.add_effect(misc.Effect("Destiny", "destiny_weapon_on_hit_destiny", 5, {}, {}, dot=misc.DoT(dot_dpt[0], dot_dpt[1], "light", match.player)))
@@ -238,6 +246,7 @@ weapon_specials["pandoras_scythe_special"] = WeaponSpecial("Pandora's Scythe", "
 weapon_specials["ruby_spike_special"] = WeaponSpecial("Ruby Spike", "ruby_spike", on_hit_chance=15/100, on_hit_func=_ruby_spike_on_hit)
 weapon_specials["thorn_replica_special"] = WeaponSpecial("Thorn Replica", "thorn_replica", on_hit_chance=1, on_hit_bonuses_func=_thorn_replica_on_hit_bonuses)
 weapon_specials["light_of_ebil_dread_special"] = WeaponSpecial("Light of Ebil Dread", "light_of_ebil_dread", on_hit_chance=1, on_hit_bonuses_func=_light_of_ebil_dread_on_hit_bonuses)
+weapon_specials["roliths_backup_hammer_special"] = WeaponSpecial("Rolith's Backup Hammer", "roliths_backup_hammer", on_hit_chance=1, on_hit_bonuses_func=_roliths_backup_hammer_on_hit_bonuses)
 
 # - DoTs
 weapon_specials["destiny_weapon_special"] = WeaponSpecial("Destiny Weapon", "destiny_weapon", on_hit_chance=5/100, on_hit_func=_destiny_weapon_on_hit, on_hit_messages=["Your foe is infused with Light!"])

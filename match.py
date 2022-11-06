@@ -362,6 +362,9 @@ class Match:
             self.entities_windows.append(DetailWindow(entity))
         self.update_player_skill_buttons()
 
+        self.on_hit_data = {}  # Data for on-hit specials
+        self.rollback_on_hit_data = [self.on_hit_data.copy()]
+
         self.window_list = [self.window, self.log_window]
         for detail_window in self.entities_windows:
             self.window_list.append(detail_window.window)
@@ -1262,6 +1265,7 @@ class Match:
             self.update_main_log(f"{self.player.name} is immobilized", "p_comment")
         for entity in self.entities:
             entity.update_rollback_data()
+        self.rollback_on_hit_data.append(self.on_hit_data.copy())
         self.rollback_targeted_enemy.append(self.targeted_enemy)
         self.rollback_enemies_alive.append(self.enemies_alive)
         self.update_targeted_enemy_buttons()
@@ -1309,6 +1313,8 @@ class Match:
             entity.rollback()
         self.pet.rollback()
 
+        self.on_hit_data = rollback_on_hit_data[-2].copy()
+        self.rollback_on_hit_data.pop()
         self.targeted_enemy = self.rollback_targeted_enemy[-2]
         self.rollback_targeted_enemy.pop()
         self.enemies_alive = self.rollback_enemies_alive[-2].copy()
