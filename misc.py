@@ -101,7 +101,7 @@ class DamageReflection:
 
 class Effect:
     def __init__(self, name, identifier, duration, bonuses, resists, death_proof=False, dot=None, stun=False,
-                 refreshable=False, retaliation=None, regeneration=None, damage_negation=None, damage_reflection=None, visible=True):
+                 refreshable=False, retaliation=None, regeneration=None, damage_negation=None, damage_reflection=None, visible=True, message=None):
         self.name = name
         self.identifier = identifier
         self.duration = duration
@@ -116,6 +116,7 @@ class Effect:
         self.dot = dot
         self.stun = stun
         self.visible = visible
+        self.message = message
 
     def __eq__(self, other):
         return self.identifier == other.identifier

@@ -268,9 +268,10 @@ class Match:
         self.rollback_targeted_enemy = [self.targeted_enemy]
         self.entities = self.enemies.copy()
         self.entities.append(self.player)
+        self.current_turn = 1
         for entity in self.entities:
             entity.match = self
-        self.current_turn = 1
+            entity.setup()
 
         # We need to keep a reference to the HP, MP, Skip and Trinket button images, so they won't get garbage-collected by python
         self.hp_button_img = tkinter.PhotoImage(file=utilities.resource_path("resources/images/hp.png"))
@@ -1313,7 +1314,7 @@ class Match:
             entity.rollback()
         self.pet.rollback()
 
-        self.on_hit_data = rollback_on_hit_data[-2].copy()
+        self.on_hit_data = self.rollback_on_hit_data[-2].copy()
         self.rollback_on_hit_data.pop()
         self.targeted_enemy = self.rollback_targeted_enemy[-2]
         self.rollback_targeted_enemy.pop()

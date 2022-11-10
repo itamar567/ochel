@@ -188,8 +188,8 @@ class Chaosweaver(classes.Player):
             old_enemy_hp = self.match.targeted_enemy.hp
             self.attack(self.match.targeted_enemy, damage_multiplier=0.875)
             damage_dealt = old_enemy_hp - self.match.targeted_enemy.hp
-            missing_hp_percent = (1 - (self.hp / self.max_hp)) / 100
-            self.attacked((100 + missing_hp_percent)/100 * damage_dealt, "health")
+            missing_hp_percent = (1 - (self.hp / self.max_hp))
+            self.attacked((1 + missing_hp_percent) * damage_dealt, "health")
 
     def skill_dominance(self):
         for entity in self.match.enemies_alive:
@@ -206,7 +206,7 @@ class Chaosweaver(classes.Player):
         else:
             effect = self.available_effects.overwhelmed()
         for i in range(19):
-            self.attack(self.match.targeted_enemy, damage_multiplier=175/19, inflicts=[effect])
+            self.attack(self.match.targeted_enemy, damage_multiplier=1.75/19, inflicts=[effect])
 
     def skill_rebuke(self):
         damage_multiplier = 5/3
@@ -414,7 +414,6 @@ class Technomancer(classes.Player):
     def skill_drillbit(self):
         stun = utilities.stun_chance(self.match.targeted_enemy)
         inflicts = [self.available_effects.stunned()] if stun else []
-        print(inflicts)
         for i in range(3):
             self.attack(self.match.targeted_enemy, damage_multiplier=0.25, inflicts=inflicts)
 

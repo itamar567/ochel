@@ -52,7 +52,7 @@ class MainStats:
         elif dmg_type == constants.DMG_TYPE_MELEE:
             return self.STR
         else:
-            return self.INT
+            return self.DEX
 
     def to_list(self):
         return [(self.STR, "STR"), (self.DEX, "DEX"), (self.INT, "INT"), (self.CHA, "CHA"), (self.LUK, "LUK"), (self.END, "END"), (self.WIS, "WIS")]
@@ -349,16 +349,19 @@ Effects:"""
             if not effect.visible:
                 continue
             result += f"\n        {effect.name}: "
-            if len(effect.bonuses.keys()) > 0:
-                for bonus in effect.bonuses.keys():
-                    result += f"{utilities.num_to_str_with_plus_minus_sign(effect.bonuses[bonus])} {bonus}, "
-            if len(effect.resists.keys()) > 0:
-                for elem in effect.resists.keys():
-                    result += f"{utilities.num_to_str_with_plus_minus_sign(effect.resists[elem])} {elem}, "
-            if effect.dot is not None:
-                result += f"{effect.dot.dmg_min}-{effect.dot.dmg_max} damage per turn, "
-            if effect.stun:
-                result += "stunned, "
+            if effect.message is None:
+                if len(effect.bonuses.keys()) > 0:
+                    for bonus in effect.bonuses.keys():
+                        result += f"{utilities.num_to_str_with_plus_minus_sign(effect.bonuses[bonus])} {bonus}, "
+                if len(effect.resists.keys()) > 0:
+                    for elem in effect.resists.keys():
+                        result += f"{utilities.num_to_str_with_plus_minus_sign(effect.resists[elem])} {elem}, "
+                if effect.dot is not None:
+                    result += f"{effect.dot.dmg_min}-{effect.dot.dmg_max} damage per turn, "
+                if effect.stun:
+                    result += "stunned, "
+            else:
+                result += f"{effect.message}, "
             effect_duration = utilities.get_effect_duration(effect, self.effects_fade_turn, self.match.current_turn)
             result += f"{effect_duration} turn(s) left."
         return result
@@ -641,6 +644,9 @@ Effects:"""
                     return
             self.stunned = False
 
+    def setup(self):
+        pass
+
     def add_effect(self, effect):
         """
         Adds an effect.
@@ -733,16 +739,9 @@ Effects:"""
         Rollbacks the entity one turn back.
         """
 
-        to_remove = []
-        for effect in self.effects:
-            if effect in self.rollback_effects[-2]:
-                continue
-            to_remove.append(effect)
-        for effect in to_remove:
+        for effect in self.effects.copy():
             self.remove_effect(effect)
         for effect in self.rollback_effects[-2]:
-            if effect in self.effects:
-                continue
             self.add_effect(effect)
         self.rollback_effects.pop()
 

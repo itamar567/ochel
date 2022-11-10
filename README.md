@@ -17,9 +17,13 @@ Currently implemented enemies:
 - Oratath
 
 ## Gear
-Currently, the only supported pet is the kid dragon.
-You can add your own gear (except trinkets/special weapons/pets) using the inventory after starting a match.
+All the in-game gear (except trinkets/special weapons/pets) is included and can be equipped from the inventory.
+
+If the gear isn't updated to the latest release, you can always add the gear manually (except trinkets/special weapons/pets) using the inventory after starting a match.
 The gear you added will be saved, and you will be able to use it in future matches.
+
+Currently, the only supported pet is the kid dragon.
+
 
 ### Weapon Specials:
 Currently implemented weapon specials:
@@ -35,6 +39,8 @@ Currently implemented weapon specials:
 - Pandora's Scythe
 - Ruby Spike
 - Thorn Replica
+- Light of Ebil Dread
+- Rolith's Backup Hammer
 - Destiny Weapons
 - Doom Weapons
 - Fourth of July Weapons
