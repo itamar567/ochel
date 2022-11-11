@@ -1165,6 +1165,8 @@ class Match:
         if self.player_disabled_skills:
             for skill in self.player.skills:
                 self.buttons[skill][0]["state"] = "disabled"
+            if constants.SLOT_TRINKET in self.player.gear and self.player.gear[constants.SLOT_TRINKET].ability_func is not None:
+                self.buttons["B"][0]["state"] = "disabled"
             return
 
         skills = list(self.player.mana_cost.keys())
