@@ -1,6 +1,16 @@
 # OCHEL
 OCHEL is a Python program that imitates DragonFable fights and provides an easier and faster way to create boss fights strategies and calculations.
 
+## Installation
+
+### Windows
+Download the [latest release](https://github.com/itamar567/ochel/releases/latest) and run the executable.
+
+### Mac and Linux
+Make sure you have Python 3 installed.
+Click the green Code button above the file list, then click Download ZIP and unzip the downloaded file.
+Double-click `main.py` to run the program.
+
 ## Features
 OCHEL currently supports all game mechanics except for pet switching.
 
@@ -68,17 +78,7 @@ Currently implemented trinkets:
 - The Corrupted Seven
 - Elemental Unity Defender XV
 
-## Getting Started
-OCHEL is currently in pre-alpha, and therefore I do not suggest using it for damage calculations at the current state.
-
-### Installation
-Make sure you have Python 3 installed.
-
-#### Cloning the repository
-Click the green Code button above the file list, then click Download ZIP and unzip the downloaded file.
-
-#### Configuring
-Edit `player_values.py` and configure the variables.
-
-#### Running the program
-Double-click `main.py` to run the program.
+## Compiling
+OCHEL uses PyInstaller to compile the python files to a windows executable.
+To compile the program, run the following command:
+`pyinstaller --noconsole --onefile --add-data "resources;resources" main.py`
